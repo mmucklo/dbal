@@ -6,6 +6,13 @@ awareness about deprecated code.
 - Use of our low-overhead runtime deprecation API, details:
   https://github.com/doctrine/deprecations/
 
+# Upgrade to 4.4
+
+## Deprecated `service` connection parameter for `oci8` and `pdo_oci` connections.
+
+Using the `service` connection parameter to indicate that the value of the `dbname` parameter is the service name has
+been deprecated. Use the `servicename` parameter instead.
+
 # Upgrade to 4.3
 
 ## Deprecated support for MariaDB 10.5
