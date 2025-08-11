@@ -236,7 +236,10 @@ class PostgreSQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
 
         $this->dropAndCreateTable($testTable);
 
-        $databaseTable = $this->schemaManager->introspectTable($testTable->getName());
+        $databaseTable = $this->schemaManager->introspectTable(
+            $testTable->getObjectName()
+                ->toString(),
+        );
 
         self::assertEquals('foo', $databaseTable->getColumn('def')->getDefault());
     }
@@ -281,7 +284,10 @@ class PostgreSQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $databaseTable = $this->schemaManager->introspectTable($table->getName());
+        $databaseTable = $this->schemaManager->introspectTable(
+            $table->getObjectName()
+                ->toString(),
+        );
 
         self::assertTrue(
             $this->schemaManager->createComparator()
@@ -314,7 +320,10 @@ class PostgreSQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $databaseTable = $this->schemaManager->introspectTable($table->getName());
+        $databaseTable = $this->schemaManager->introspectTable(
+            $table->getObjectName()
+                ->toString(),
+        );
 
         self::assertTrue(
             $this->schemaManager->createComparator()

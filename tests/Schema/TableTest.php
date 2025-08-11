@@ -15,6 +15,8 @@ use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexType;
 use Doctrine\DBAL\Schema\Name\Identifier;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Schema\Table;
@@ -52,7 +54,10 @@ class TableTest extends TestCase
             )
             ->create();
 
-        self::assertEquals('foo', $table->getName());
+        self::assertEquals(
+            OptionallyQualifiedName::unquoted('foo'),
+            $table->getObjectName(),
+        );
     }
 
     public function testColumns(): void
@@ -75,8 +80,15 @@ class TableTest extends TestCase
         self::assertTrue($table->hasColumn('bar'));
         self::assertFalse($table->hasColumn('baz'));
 
-        self::assertSame('foo', $table->getColumn('foo')->getName());
-        self::assertSame('bar', $table->getColumn('bar')->getName());
+        self::assertEquals(
+            UnqualifiedName::unquoted('foo'),
+            $table->getColumn('foo')->getObjectName(),
+        );
+
+        self::assertEquals(
+            UnqualifiedName::unquoted('foo'),
+            $table->getColumn('foo')->getObjectName(),
+        );
 
         self::assertCount(2, $table->getColumns());
     }
@@ -424,8 +436,16 @@ class TableTest extends TestCase
         self::assertFalse($table->hasIndex('some_idx'));
 
         self::assertNotNull($table->getPrimaryKey());
-        self::assertSame('the_primary', $table->getIndex('the_primary')->getName());
-        self::assertSame('bar_idx', $table->getIndex('bar_idx')->getName());
+
+        self::assertEquals(
+            UnqualifiedName::unquoted('the_primary'),
+            $table->getIndex('the_primary')->getObjectName(),
+        );
+
+        self::assertEquals(
+            UnqualifiedName::unquoted('bar_idx'),
+            $table->getIndex('bar_idx')->getObjectName(),
+        );
     }
 
     public function testGetUnknownIndexThrowsException(): void
@@ -1063,7 +1083,7 @@ class TableTest extends TestCase
         $mysqlPlatform  = new MySQLPlatform();
         $sqlitePlatform = new SQLitePlatform();
 
-        self::assertEquals('bar', $table->getName());
+        self::assertEquals('bar', $table->getObjectName()->getUnqualifiedName()->getValue());
         self::assertEquals('`bar`', $table->getQuotedName($mysqlPlatform));
         self::assertEquals('"bar"', $table->getQuotedName($sqlitePlatform));
     }
@@ -1141,7 +1161,7 @@ class TableTest extends TestCase
             )
             ->create();
 
-        self::assertEquals('test.test', $table->getName());
+        self::assertEquals('"test"."test"', $table->getObjectName()->toString());
         self::assertEquals('`test`.`test`', $table->getQuotedName(new MySQLPlatform()));
     }
 

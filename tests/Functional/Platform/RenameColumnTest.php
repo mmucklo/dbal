@@ -6,12 +6,15 @@ namespace Doctrine\DBAL\Tests\Functional\Platform;
 
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\Tests\FunctionalTestCase;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\Attributes\DataProvider;
+
+use function array_map;
 
 class RenameColumnTest extends FunctionalTestCase
 {
@@ -56,12 +59,16 @@ class RenameColumnTest extends FunctionalTestCase
 
         $sm->alterTable($diff);
 
-        $table   = $sm->introspectTable('test_rename');
-        $columns = $table->getColumns();
+        $table = $sm->introspectTable('test_rename');
 
-        self::assertCount(2, $columns);
-        self::assertEqualsIgnoringCase($newColumnName, $columns[0]->getName());
-        self::assertEqualsIgnoringCase('c2', $columns[1]->getName());
+        $this->assertUnqualifiedNameListEquals([
+            UnqualifiedName::unquoted($newColumnName),
+            UnqualifiedName::unquoted('c2'),
+        ], array_map(
+            static fn (Column $column): UnqualifiedName => $column->getObjectName(),
+            $table->getColumns(),
+        ));
+
         self::assertCount(1, self::getRenamedColumns($diff));
         self::assertCount(1, $diff->getRenamedColumns());
     }
@@ -75,7 +82,10 @@ class RenameColumnTest extends FunctionalTestCase
                 continue;
             }
 
-            $oldColumnName           = $diff->getOldColumn()->getName();
+            $oldColumnName = $diff->getOldColumn()
+                ->getObjectName()
+                ->toString();
+
             $renamed[$oldColumnName] = $diff->getNewColumn();
         }
 
@@ -117,15 +127,19 @@ class RenameColumnTest extends FunctionalTestCase
 
         $sm->alterTable($diff);
 
-        $table   = $sm->introspectTable('test_rename');
-        $columns = $table->getColumns();
+        $table = $sm->introspectTable('test_rename');
 
         self::assertCount(1, $diff->getChangedColumns());
         self::assertCount(1, $diff->getRenamedColumns());
         self::assertCount(1, $diff->getModifiedColumns());
-        self::assertCount(2, $columns);
-        self::assertEqualsIgnoringCase($newColumnName, $columns[0]->getName());
-        self::assertEqualsIgnoringCase('c2', $columns[1]->getName());
+
+        $this->assertUnqualifiedNameListEquals([
+            UnqualifiedName::unquoted($newColumnName),
+            UnqualifiedName::unquoted('c2'),
+        ], array_map(
+            static fn (Column $column): UnqualifiedName => $column->getObjectName(),
+            $table->getColumns(),
+        ));
     }
 
     /** @return iterable<array{non-empty-string,non-empty-string}> */
@@ -133,7 +147,7 @@ class RenameColumnTest extends FunctionalTestCase
     {
         yield ['c1', 'c1_x'];
         yield ['C1', 'c1_x'];
-        yield ['importantColumn', 'veryImportantColumn'];
+        yield ['importantColumn', 'very_important_column'];
     }
 
     /** @throws Exception */

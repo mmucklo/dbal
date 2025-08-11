@@ -328,7 +328,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         self::assertArrayHasKey('id', $columns);
         self::assertEquals(0, array_search('id', $columnsKeys, true));
-        self::assertEquals('id', strtolower($columns['id']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('id'),
+            $columns['id']->getObjectName(),
+        );
         self::assertInstanceOf(IntegerType::class, $columns['id']->getType());
         self::assertEquals(false, $columns['id']->getUnsigned());
         self::assertEquals(true, $columns['id']->getNotnull());
@@ -336,14 +339,20 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         self::assertArrayHasKey('test', $columns);
         self::assertEquals(1, array_search('test', $columnsKeys, true));
-        self::assertEquals('test', strtolower($columns['test']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test'),
+            $columns['test']->getObjectName(),
+        );
         self::assertInstanceOf(StringType::class, $columns['test']->getType());
         self::assertEquals(255, $columns['test']->getLength());
         self::assertEquals(false, $columns['test']->getFixed());
         self::assertEquals(false, $columns['test']->getNotnull());
         self::assertEquals('expected default', $columns['test']->getDefault());
 
-        self::assertEquals('foo', strtolower($columns['foo']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('foo'),
+            $columns['foo']->getObjectName(),
+        );
         self::assertEquals(2, array_search('foo', $columnsKeys, true));
         self::assertInstanceOf(TextType::class, $columns['foo']->getType());
         self::assertEquals(false, $columns['foo']->getUnsigned());
@@ -351,7 +360,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEquals(true, $columns['foo']->getNotnull());
         self::assertEquals(null, $columns['foo']->getDefault());
 
-        self::assertEquals('bar', strtolower($columns['bar']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('bar'),
+            $columns['bar']->getObjectName(),
+        );
         self::assertEquals(3, array_search('bar', $columnsKeys, true));
         self::assertInstanceOf(DecimalType::class, $columns['bar']->getType());
         self::assertEquals(null, $columns['bar']->getLength());
@@ -362,13 +374,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEquals(false, $columns['bar']->getNotnull());
         self::assertEquals(null, $columns['bar']->getDefault());
 
-        self::assertEquals('baz1', strtolower($columns['baz1']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('baz1'),
+            $columns['baz1']->getObjectName(),
+        );
         self::assertEquals(4, array_search('baz1', $columnsKeys, true));
         self::assertInstanceOf(DateTimeType::class, $columns['baz1']->getType());
         self::assertEquals(true, $columns['baz1']->getNotnull());
         self::assertEquals(null, $columns['baz1']->getDefault());
 
-        self::assertEquals('baz2', strtolower($columns['baz2']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('baz2'),
+            $columns['baz2']->getObjectName(),
+        );
         self::assertEquals(5, array_search('baz2', $columnsKeys, true));
         self::assertContains(
             $columns['baz2']->getType()::class,
@@ -377,7 +395,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEquals(true, $columns['baz2']->getNotnull());
         self::assertEquals(null, $columns['baz2']->getDefault());
 
-        self::assertEquals('baz3', strtolower($columns['baz3']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('baz3'),
+            $columns['baz3']->getObjectName(),
+        );
         self::assertEquals(6, array_search('baz3', $columnsKeys, true));
         self::assertContains(
             $columns['baz3']->getType()::class,
@@ -461,12 +482,18 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertTrue($tableIndexes['primary']->isUnique());
         self::assertTrue($tableIndexes['primary']->isPrimary());
 
-        self::assertEquals('test_index_name', strtolower($tableIndexes['test_index_name']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test_index_name'),
+            $tableIndexes['test_index_name']->getObjectName(),
+        );
         self::assertEquals(['test'], array_map('strtolower', $tableIndexes['test_index_name']->getColumns()));
         self::assertTrue($tableIndexes['test_index_name']->isUnique());
         self::assertFalse($tableIndexes['test_index_name']->isPrimary());
 
-        self::assertEquals('test_composite_idx', strtolower($tableIndexes['test_composite_idx']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test_composite_idx'),
+            $tableIndexes['test_composite_idx']->getObjectName(),
+        );
         self::assertEquals(['id', 'test'], array_map('strtolower', $tableIndexes['test_composite_idx']->getColumns()));
         self::assertFalse($tableIndexes['test_composite_idx']->isUnique());
         self::assertFalse($tableIndexes['test_composite_idx']->isPrimary());
@@ -487,12 +514,24 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
+        $platform = $this->connection->getDatabasePlatform();
+
         $index = $table->getIndex('test');
-        $this->schemaManager->dropIndex($index->getName(), $table->getName());
-        $this->schemaManager->createIndex($index, $table->getName());
+        $this->schemaManager->dropIndex(
+            $index->getObjectName()->toSQL($platform),
+            $table->getObjectName()->toSQL($platform),
+        );
+
+        $this->schemaManager->createIndex(
+            $index,
+            $table->getObjectName()->toSQL($platform),
+        );
         $tableIndexes = $this->schemaManager->listTableIndexes('test_create_index');
 
-        self::assertEquals('test', strtolower($tableIndexes['test']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test'),
+            $tableIndexes['test']->getObjectName(),
+        );
         self::assertEquals(['test'], array_map('strtolower', $tableIndexes['test']->getColumns()));
         self::assertTrue($tableIndexes['test']->isUnique());
         self::assertFalse($tableIndexes['test']->isPrimary());
@@ -516,12 +555,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
+        $constraintName = UnqualifiedName::quoted('uniq_id');
+
         $uniqueConstraint = UniqueConstraint::editor()
-            ->setUnquotedName('uniq_id')
+            ->setName($constraintName)
             ->setUnquotedColumnNames('id')
             ->create();
 
-        $this->schemaManager->createUniqueConstraint($uniqueConstraint, $table->getName());
+        $platform = $this->connection->getDatabasePlatform();
+
+        $this->schemaManager->createUniqueConstraint(
+            $uniqueConstraint,
+            $table->getObjectName()->toSQL($platform),
+        );
 
         // there's currently no API for introspecting unique constraints,
         // so introspect the underlying indexes instead
@@ -534,7 +580,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEqualsIgnoringCase('uniq_id', $index->getName());
         self::assertTrue($index->isUnique());
 
-        $this->schemaManager->dropUniqueConstraint($uniqueConstraint->getName(), $table->getName());
+        $this->schemaManager->dropUniqueConstraint(
+            $constraintName->toSQL($platform),
+            $table->getObjectName()->toSQL($platform),
+        );
 
         $indexes = $this->schemaManager->listTableIndexes('test_unique_constraint');
         self::assertEmpty($indexes);
@@ -795,8 +844,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             )
             ->create();
 
-        $this->dropTableIfExists($tableFK->getName());
-        $this->dropTableIfExists($table->getName());
+        $platform = $this->connection->getDatabasePlatform();
+
+        $this->dropTableIfExists($tableFK->getObjectName()->toSQL($platform));
+        $this->dropTableIfExists($table->getObjectName()->toSQL($platform));
 
         $this->schemaManager->createTable($table);
         $this->schemaManager->createTable($tableFK);
@@ -838,7 +889,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $diff = $this->schemaManager->createComparator()
             ->compareTables(
-                $this->schemaManager->introspectTable($tableFK->getName()),
+                $this->schemaManager->introspectTable($tableFK->getObjectName()->toString()),
                 $tableFKNew,
             );
 
@@ -896,8 +947,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             )
             ->create();
 
-        $this->dropTableIfExists($foreignTable->getName());
-        $this->dropTableIfExists($primaryTable->getName());
+        $platform = $this->connection->getDatabasePlatform();
+
+        $this->dropTableIfExists($foreignTable->getObjectName()->toSQL($platform));
+        $this->dropTableIfExists($primaryTable->getObjectName()->toSQL($platform));
 
         $this->schemaManager->createTable($primaryTable);
         $this->schemaManager->createTable($foreignTable);
@@ -1409,7 +1462,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $sequence               = new Sequence($sequenceName, $sequenceAllocationSize, $sequenceInitialValue);
 
         try {
-            $this->schemaManager->dropSequence($sequence->getName());
+            $this->schemaManager->dropSequence(
+                $sequence->getObjectName()
+                    ->toSQL($platform),
+            );
         } catch (DatabaseObjectNotFoundException) {
         }
 

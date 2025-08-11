@@ -412,7 +412,7 @@ class Table extends AbstractNamedObject
         if ($oldName === $newName) {
             throw new LogicException(sprintf(
                 'Attempt to rename column "%s.%s" to the same name.',
-                $this->getName(),
+                $this->name->toString(),
                 $oldName,
             ));
         }

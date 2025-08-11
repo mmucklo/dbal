@@ -28,7 +28,7 @@ class IndexTest extends TestCase
     public function testCreateIndex(): void
     {
         $idx = $this->createIndex();
-        self::assertEquals('foo', $idx->getName());
+        self::assertEquals(UnqualifiedName::unquoted('foo'), $idx->getObjectName());
         $columns = $idx->getColumns();
         self::assertCount(2, $columns);
         self::assertEquals(['bar', 'baz'], $columns);

@@ -54,7 +54,7 @@ class DBAL6024Test extends FunctionalTestCase
         }
 
         $validationSchema = $schemaManager->introspectSchema();
-        $validationTable  = $validationSchema->getTable($table->getName());
+        $validationTable  = $validationSchema->getTable($table->getObjectName()->toString());
 
         self::assertNull($validationTable->getPrimaryKey());
     }

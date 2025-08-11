@@ -205,7 +205,7 @@ class SQLitePlatformTest extends AbstractPlatformTestCase
             (new class () extends SqlitePlatform {
                 public function getCreatePrimaryKeySQL(Index $index, string $table): string
                 {
-                    return 'TEST: ' . $table . ', ' . $index->getName()
+                    return 'TEST: ' . $table . ', ' . $index->getObjectName()->toString()
                         . ' - ' . implode(', ', $index->getColumns());
                 }
             })->getCreateIndexSQL($primaryIndexDef, 'main.mytable'),

@@ -11,6 +11,7 @@ use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Exception\UnknownColumnOption;
 use Doctrine\DBAL\Schema\Name\Identifier;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\Deprecations\PHPUnit\VerifyDeprecations;
@@ -25,7 +26,7 @@ class ColumnTest extends TestCase
     {
         $column = $this->createColumn();
 
-        self::assertEquals('foo', $column->getName());
+        self::assertEquals(UnqualifiedName::unquoted('foo'), $column->getObjectName());
         self::assertSame(Type::getType(Types::STRING), $column->getType());
 
         self::assertEquals(200, $column->getLength());
@@ -110,7 +111,7 @@ class ColumnTest extends TestCase
         $mysqlPlatform  = new MySQLPlatform();
         $sqlitePlatform = new SQLitePlatform();
 
-        self::assertEquals('bar', $column->getName());
+        self::assertEquals('"bar"', $column->getObjectName()->toString());
         self::assertEquals('`bar`', $column->getQuotedName($mysqlPlatform));
         self::assertEquals('"bar"', $column->getQuotedName($sqlitePlatform));
 
@@ -121,7 +122,7 @@ class ColumnTest extends TestCase
 
         $sqlServerPlatform = new SQLServerPlatform();
 
-        self::assertEquals('bar', $column->getName());
+        self::assertEquals('"bar"', $column->getObjectName()->toString());
         self::assertEquals('[bar]', $column->getQuotedName($sqlServerPlatform));
     }
 
