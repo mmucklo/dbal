@@ -12,7 +12,7 @@ use Doctrine\DBAL\Platforms\OraclePlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
-use Doctrine\DBAL\Schema\AbstractAsset;
+use Doctrine\DBAL\Schema\AbstractNamedObject;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnEditor;
@@ -46,17 +46,14 @@ use Doctrine\DBAL\Types\TimeType;
 use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-use function array_filter;
 use function array_keys;
 use function array_map;
 use function array_search;
 use function array_values;
-use function count;
 use function current;
 use function get_debug_type;
 use function sprintf;
 use function str_starts_with;
-use function strcasecmp;
 use function strtolower;
 
 abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
@@ -112,32 +109,43 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createSequence(new Sequence($name));
 
-        self::assertTrue($this->hasElementWithName($this->schemaManager->listSequences(), $name));
-    }
-
-    /** @param AbstractAsset<OptionallyQualifiedName>[] $items */
-    private function hasElementWithName(array $items, string $name): bool
-    {
-        $filteredList = $this->filterElementsByName($items, $name);
-
-        return count($filteredList) === 1;
+        self::assertNotNull($this->findObjectByShortestName($this->schemaManager->listSequences(), $name));
     }
 
     /**
-     * @param T[] $items
+     * @param list<T> $objects
      *
-     * @return T[]
+     * @return ?T
      *
-     * @template T of AbstractAsset<OptionallyQualifiedName>
+     * @template T of AbstractNamedObject<OptionallyQualifiedName>
      */
-    private function filterElementsByName(array $items, string $name): array
+    protected function findObjectByName(array $objects, string $name): ?AbstractNamedObject
     {
-        return array_filter(
-            $items,
-            static function (AbstractAsset $item) use ($name): bool {
-                return $item->getShortestName($item->getNamespaceName()) === $name;
-            },
-        );
+        foreach ($objects as $object) {
+            if (strtolower($object->getName()) === $name) {
+                return $object;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<T> $objects
+     *
+     * @return ?T
+     *
+     * @template T of AbstractNamedObject<OptionallyQualifiedName>
+     */
+    protected function findObjectByShortestName(array $objects, string $name): ?AbstractNamedObject
+    {
+        foreach ($objects as $object) {
+            if ($object->getShortestName($object->getNamespaceName()) === $name) {
+                return $object;
+            }
+        }
+
+        return null;
     }
 
     public function testListSequences(): void
@@ -152,16 +160,14 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             new Sequence('list_sequences_test_seq', 20, 10),
         );
 
-        foreach ($this->schemaManager->listSequences() as $sequence) {
-            if (strtolower($sequence->getName()) === 'list_sequences_test_seq') {
-                self::assertSame(20, $sequence->getAllocationSize());
-                self::assertSame(10, $sequence->getInitialValue());
+        $createdSequence = $this->findObjectByShortestName(
+            $this->schemaManager->listSequences(),
+            'list_sequences_test_seq',
+        );
 
-                return;
-            }
-        }
-
-        self::fail('Sequence was not found.');
+        self::assertNotNull($createdSequence);
+        self::assertSame(20, $createdSequence->getAllocationSize());
+        self::assertSame(10, $createdSequence->getInitialValue());
     }
 
     public function testListDatabases(): void
@@ -207,7 +213,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->createTestTable('list_tables_test');
         $tables = $this->schemaManager->listTables();
 
-        $table = $this->findTableByName($tables, 'list_tables_test');
+        $table = $this->findObjectByShortestName($tables, 'list_tables_test');
         self::assertNotNull($table);
 
         self::assertTrue($table->hasColumn('id'));
@@ -225,7 +231,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->schemaManager->createView($view);
 
         $tables = $this->schemaManager->listTables();
-        $view   = $this->findTableByName($tables, 'test_view');
+        $view   = $this->findObjectByShortestName($tables, 'test_view');
         self::assertNull($view);
     }
 
@@ -731,10 +737,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $views = $this->schemaManager->listViews();
 
-        $filtered = array_values($this->filterElementsByName($views, $name));
-        self::assertCount(1, $filtered);
+        $found = $this->findObjectByShortestName($views, $name);
+        self::assertNotNull($found);
 
-        self::assertStringContainsString('view_test_table', $filtered[0]->getSql());
+        self::assertStringContainsString('view_test_table', $found->getSql());
     }
 
     public function testUpdateSchemaWithForeignKeyRenaming(): void
@@ -1376,20 +1382,15 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->schemaManager->createSequence($sequence1);
         $this->schemaManager->createSequence($sequence2);
 
-        /** @var Sequence[] $actualSequences */
-        $actualSequences = [];
-        foreach ($this->schemaManager->listSequences() as $sequence) {
-            $actualSequences[$sequence->getName()] = $sequence;
-        }
+        $actualSequences = $this->schemaManager->listSequences();
+        $actualSequence1 = $this->findObjectByShortestName($actualSequences, $sequence1Name);
+        $actualSequence2 = $this->findObjectByShortestName($actualSequences, $sequence2Name);
 
-        $actualSequence1 = $actualSequences[$sequence1Name];
-        $actualSequence2 = $actualSequences[$sequence2Name];
-
-        self::assertSame($sequence1Name, $actualSequence1->getName());
+        self::assertNotNull($actualSequence1);
         self::assertEquals($sequence1AllocationSize, $actualSequence1->getAllocationSize());
         self::assertEquals($sequence1InitialValue, $actualSequence1->getInitialValue());
 
-        self::assertSame($sequence2Name, $actualSequence2->getName());
+        self::assertNotNull($actualSequence2);
         self::assertEquals($sequence2AllocationSize, $actualSequence2->getAllocationSize());
         self::assertEquals($sequence2InitialValue, $actualSequence2->getInitialValue());
     }
@@ -1414,14 +1415,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createSequence($sequence);
 
-        $createdSequence = array_values(
-            array_filter(
-                $this->schemaManager->listSequences(),
-                static function (Sequence $sequence) use ($sequenceName): bool {
-                    return strcasecmp($sequence->getName(), $sequenceName) === 0;
-                },
-            ),
-        )[0] ?? null;
+        $createdSequence = $this->findObjectByShortestName($this->schemaManager->listSequences(), $sequenceName);
 
         self::assertNotNull($createdSequence);
 
@@ -1555,7 +1549,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $tables = $this->schemaManager->listTables();
 
-        $user = $this->findTableByName($tables, 'user');
+        $user = $this->findObjectByShortestName($tables, 'user');
         self::assertNotNull($user);
         self::assertCount(2, $user->getColumns());
         self::assertCount(2, $user->getIndexes());
@@ -1908,18 +1902,6 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertCount(1, $columns);
     }
 
-    /** @param list<Table> $tables */
-    protected function findTableByName(array $tables, string $name): ?Table
-    {
-        foreach ($tables as $table) {
-            if (strtolower($table->getName()) === $name) {
-                return $table;
-            }
-        }
-
-        return null;
-    }
-
     /** @throws Exception */
     public function testDefaultSchemaName(): void
     {
@@ -1982,7 +1964,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertContains('nested.schematable', $tableNames);
 
         $tables = $this->schemaManager->listTables();
-        self::assertNotNull($this->findTableByName($tables, 'nested.schematable'));
+        self::assertNotNull($this->findObjectByName($tables, 'nested.schematable'));
 
         $nestedSchemaTable = $this->schemaManager->introspectTable('nested.schematable');
         self::assertTrue($nestedSchemaTable->hasColumn('id'));

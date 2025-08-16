@@ -25,7 +25,6 @@ use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 use function sprintf;
-use function strtolower;
 use function version_compare;
 
 class PostgreSQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
@@ -406,16 +405,9 @@ class PostgreSQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
 
         $tables = $this->schemaManager->listTables();
 
-        $foundTable = false;
-        foreach ($tables as $table) {
-            if (strtolower($table->getName()) !== 'list_tables_excludes_views_test_view') {
-                continue;
-            }
+        $foundTable = $this->findObjectByShortestName($tables, 'list_tables_excludes_views_test_view');
 
-            $foundTable = true;
-        }
-
-        self::assertFalse($foundTable, 'View "list_tables_excludes_views_test_view" must not be found in table list');
+        self::assertNull($foundTable, 'View "list_tables_excludes_views_test_view" must not be found in table list');
     }
 
     public function testPartialIndexes(): void
