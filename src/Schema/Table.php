@@ -643,10 +643,11 @@ class Table extends AbstractNamedObject
     /**
      * Returns the list of table columns.
      *
-     * @return list<Column>
+     * @return non-empty-list<Column>
      */
     public function getColumns(): array
     {
+        /** @phpstan-ignore return.type */
         return array_values($this->_columns);
     }
 
