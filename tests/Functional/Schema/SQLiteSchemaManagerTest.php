@@ -394,13 +394,13 @@ SQL;
         self::assertCount(2, $foreignKeys);
 
         $foreignKey1 = $foreignKeys[0];
-        self::assertEmpty($foreignKey1->getName());
+        self::assertNull($foreignKey1->getObjectName());
 
         self::assertSame(['album_id'], $foreignKey1->getLocalColumns());
         self::assertSame(['id'], $foreignKey1->getForeignColumns());
 
         $foreignKey2 = $foreignKeys[1];
-        self::assertEmpty($foreignKey2->getName());
+        self::assertNull($foreignKey2->getObjectName());
 
         self::assertSame(['artist_id'], $foreignKey2->getLocalColumns());
         self::assertSame(['id'], $foreignKey2->getForeignColumns());
@@ -467,7 +467,7 @@ SQL;
         self::assertCount(1, $foreignKeys);
 
         $foreignKey1 = $foreignKeys[0];
-        self::assertEmpty($foreignKey1->getName());
+        self::assertNull($foreignKey1->getObjectName());
 
         self::assertSame(['trackartist'], $foreignKey1->getLocalColumns());
         self::assertSame(['artistid'], $foreignKey1->getForeignColumns());

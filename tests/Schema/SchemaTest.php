@@ -6,6 +6,7 @@ namespace Doctrine\DBAL\Tests\Schema;
 
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
+use Doctrine\DBAL\Schema\Name\OptionallyQualifiedName;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaConfig;
 use Doctrine\DBAL\Schema\SchemaException;
@@ -116,7 +117,7 @@ class SchemaTest extends TestCase
 
         $table = $schema->createTable('foo');
 
-        self::assertEquals('foo', $table->getName());
+        self::assertEquals(OptionallyQualifiedName::unquoted('foo'), $table->getObjectName());
         self::assertTrue($schema->hasTable('foo'));
     }
 
@@ -127,7 +128,10 @@ class SchemaTest extends TestCase
         $schema = new Schema([], [$sequence]);
 
         self::assertTrue($schema->hasSequence('a_seq'));
-        self::assertSame('a_seq', $schema->getSequence('a_seq')->getName());
+        self::assertEquals(
+            OptionallyQualifiedName::unquoted('a_seq'),
+            $schema->getSequence('a_seq')->getObjectName(),
+        );
 
         self::assertEquals([$sequence], $schema->getSequences());
     }
@@ -159,12 +163,18 @@ class SchemaTest extends TestCase
         $schema   = new Schema();
         $sequence = $schema->createSequence('a_seq', 10, 20);
 
-        self::assertEquals('a_seq', $sequence->getName());
+        self::assertEquals(
+            OptionallyQualifiedName::unquoted('a_seq'),
+            $sequence->getObjectName(),
+        );
         self::assertEquals(10, $sequence->getAllocationSize());
         self::assertEquals(20, $sequence->getInitialValue());
 
         self::assertTrue($schema->hasSequence('a_seq'));
-        self::assertSame('a_seq', $schema->getSequence('a_seq')->getName());
+        self::assertEquals(
+            OptionallyQualifiedName::unquoted('a_seq'),
+            $schema->getSequence('a_seq')->getObjectName(),
+        );
 
         self::assertEquals([$sequence], $schema->getSequences());
     }
@@ -203,7 +213,7 @@ class SchemaTest extends TestCase
 
         $index = array_shift($indexes);
         self::assertNotNull($index);
-        self::assertEquals(5, strlen($index->getName()));
+        self::assertEquals(5, strlen($index->getObjectName()->toString()));
     }
 
     public function testDeepClone(): void

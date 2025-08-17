@@ -102,7 +102,7 @@ class IndexEditorTest extends TestCase
         $index2 = $index1->edit()
             ->create();
 
-        self::assertSame('idx_user_name', $index2->getName());
+        self::assertEquals(UnqualifiedName::unquoted('idx_user_name'), $index2->getObjectName());
         self::assertSame(['user_name'], $index2->getColumns());
         self::assertFalse($index2->isUnique());
         self::assertFalse($index2->isPrimary());

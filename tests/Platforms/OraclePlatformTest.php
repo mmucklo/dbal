@@ -563,7 +563,7 @@ SQL
             ->create();
 
         self::assertTrue($table->isQuoted());
-        self::assertEquals('test', $table->getName());
+        self::assertEquals('test', $table->getObjectName()->getUnqualifiedName()->getValue());
         self::assertEquals('"test"', $table->getQuotedName($this->platform));
 
         $sql = $this->platform->getCreateTableSQL($table);

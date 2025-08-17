@@ -12,7 +12,7 @@ use Doctrine\DBAL\Platforms\OraclePlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
-use Doctrine\DBAL\Schema\AbstractAsset;
+use Doctrine\DBAL\Schema\AbstractNamedObject;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnEditor;
@@ -46,17 +46,14 @@ use Doctrine\DBAL\Types\TimeType;
 use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-use function array_filter;
 use function array_keys;
 use function array_map;
 use function array_search;
 use function array_values;
-use function count;
 use function current;
 use function get_debug_type;
 use function sprintf;
 use function str_starts_with;
-use function strcasecmp;
 use function strtolower;
 
 abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
@@ -112,32 +109,43 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createSequence(new Sequence($name));
 
-        self::assertTrue($this->hasElementWithName($this->schemaManager->listSequences(), $name));
-    }
-
-    /** @param AbstractAsset<OptionallyQualifiedName>[] $items */
-    private function hasElementWithName(array $items, string $name): bool
-    {
-        $filteredList = $this->filterElementsByName($items, $name);
-
-        return count($filteredList) === 1;
+        self::assertNotNull($this->findObjectByShortestName($this->schemaManager->listSequences(), $name));
     }
 
     /**
-     * @param T[] $items
+     * @param list<T> $objects
      *
-     * @return T[]
+     * @return ?T
      *
-     * @template T of AbstractAsset<OptionallyQualifiedName>
+     * @template T of AbstractNamedObject<OptionallyQualifiedName>
      */
-    private function filterElementsByName(array $items, string $name): array
+    protected function findObjectByName(array $objects, string $name): ?AbstractNamedObject
     {
-        return array_filter(
-            $items,
-            static function (AbstractAsset $item) use ($name): bool {
-                return $item->getShortestName($item->getNamespaceName()) === $name;
-            },
-        );
+        foreach ($objects as $object) {
+            if (strtolower($object->getName()) === $name) {
+                return $object;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<T> $objects
+     *
+     * @return ?T
+     *
+     * @template T of AbstractNamedObject<OptionallyQualifiedName>
+     */
+    protected function findObjectByShortestName(array $objects, string $name): ?AbstractNamedObject
+    {
+        foreach ($objects as $object) {
+            if ($object->getShortestName($object->getNamespaceName()) === $name) {
+                return $object;
+            }
+        }
+
+        return null;
     }
 
     public function testListSequences(): void
@@ -152,16 +160,14 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             new Sequence('list_sequences_test_seq', 20, 10),
         );
 
-        foreach ($this->schemaManager->listSequences() as $sequence) {
-            if (strtolower($sequence->getName()) === 'list_sequences_test_seq') {
-                self::assertSame(20, $sequence->getAllocationSize());
-                self::assertSame(10, $sequence->getInitialValue());
+        $createdSequence = $this->findObjectByShortestName(
+            $this->schemaManager->listSequences(),
+            'list_sequences_test_seq',
+        );
 
-                return;
-            }
-        }
-
-        self::fail('Sequence was not found.');
+        self::assertNotNull($createdSequence);
+        self::assertSame(20, $createdSequence->getAllocationSize());
+        self::assertSame(10, $createdSequence->getInitialValue());
     }
 
     public function testListDatabases(): void
@@ -207,7 +213,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->createTestTable('list_tables_test');
         $tables = $this->schemaManager->listTables();
 
-        $table = $this->findTableByName($tables, 'list_tables_test');
+        $table = $this->findObjectByShortestName($tables, 'list_tables_test');
         self::assertNotNull($table);
 
         self::assertTrue($table->hasColumn('id'));
@@ -225,7 +231,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->schemaManager->createView($view);
 
         $tables = $this->schemaManager->listTables();
-        $view   = $this->findTableByName($tables, 'test_view');
+        $view   = $this->findObjectByShortestName($tables, 'test_view');
         self::assertNull($view);
     }
 
@@ -322,7 +328,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         self::assertArrayHasKey('id', $columns);
         self::assertEquals(0, array_search('id', $columnsKeys, true));
-        self::assertEquals('id', strtolower($columns['id']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('id'),
+            $columns['id']->getObjectName(),
+        );
         self::assertInstanceOf(IntegerType::class, $columns['id']->getType());
         self::assertEquals(false, $columns['id']->getUnsigned());
         self::assertEquals(true, $columns['id']->getNotnull());
@@ -330,14 +339,20 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         self::assertArrayHasKey('test', $columns);
         self::assertEquals(1, array_search('test', $columnsKeys, true));
-        self::assertEquals('test', strtolower($columns['test']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test'),
+            $columns['test']->getObjectName(),
+        );
         self::assertInstanceOf(StringType::class, $columns['test']->getType());
         self::assertEquals(255, $columns['test']->getLength());
         self::assertEquals(false, $columns['test']->getFixed());
         self::assertEquals(false, $columns['test']->getNotnull());
         self::assertEquals('expected default', $columns['test']->getDefault());
 
-        self::assertEquals('foo', strtolower($columns['foo']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('foo'),
+            $columns['foo']->getObjectName(),
+        );
         self::assertEquals(2, array_search('foo', $columnsKeys, true));
         self::assertInstanceOf(TextType::class, $columns['foo']->getType());
         self::assertEquals(false, $columns['foo']->getUnsigned());
@@ -345,7 +360,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEquals(true, $columns['foo']->getNotnull());
         self::assertEquals(null, $columns['foo']->getDefault());
 
-        self::assertEquals('bar', strtolower($columns['bar']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('bar'),
+            $columns['bar']->getObjectName(),
+        );
         self::assertEquals(3, array_search('bar', $columnsKeys, true));
         self::assertInstanceOf(DecimalType::class, $columns['bar']->getType());
         self::assertEquals(null, $columns['bar']->getLength());
@@ -356,13 +374,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEquals(false, $columns['bar']->getNotnull());
         self::assertEquals(null, $columns['bar']->getDefault());
 
-        self::assertEquals('baz1', strtolower($columns['baz1']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('baz1'),
+            $columns['baz1']->getObjectName(),
+        );
         self::assertEquals(4, array_search('baz1', $columnsKeys, true));
         self::assertInstanceOf(DateTimeType::class, $columns['baz1']->getType());
         self::assertEquals(true, $columns['baz1']->getNotnull());
         self::assertEquals(null, $columns['baz1']->getDefault());
 
-        self::assertEquals('baz2', strtolower($columns['baz2']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('baz2'),
+            $columns['baz2']->getObjectName(),
+        );
         self::assertEquals(5, array_search('baz2', $columnsKeys, true));
         self::assertContains(
             $columns['baz2']->getType()::class,
@@ -371,7 +395,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEquals(true, $columns['baz2']->getNotnull());
         self::assertEquals(null, $columns['baz2']->getDefault());
 
-        self::assertEquals('baz3', strtolower($columns['baz3']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('baz3'),
+            $columns['baz3']->getObjectName(),
+        );
         self::assertEquals(6, array_search('baz3', $columnsKeys, true));
         self::assertContains(
             $columns['baz3']->getType()::class,
@@ -455,12 +482,18 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertTrue($tableIndexes['primary']->isUnique());
         self::assertTrue($tableIndexes['primary']->isPrimary());
 
-        self::assertEquals('test_index_name', strtolower($tableIndexes['test_index_name']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test_index_name'),
+            $tableIndexes['test_index_name']->getObjectName(),
+        );
         self::assertEquals(['test'], array_map('strtolower', $tableIndexes['test_index_name']->getColumns()));
         self::assertTrue($tableIndexes['test_index_name']->isUnique());
         self::assertFalse($tableIndexes['test_index_name']->isPrimary());
 
-        self::assertEquals('test_composite_idx', strtolower($tableIndexes['test_composite_idx']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test_composite_idx'),
+            $tableIndexes['test_composite_idx']->getObjectName(),
+        );
         self::assertEquals(['id', 'test'], array_map('strtolower', $tableIndexes['test_composite_idx']->getColumns()));
         self::assertFalse($tableIndexes['test_composite_idx']->isUnique());
         self::assertFalse($tableIndexes['test_composite_idx']->isPrimary());
@@ -481,12 +514,24 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
+        $platform = $this->connection->getDatabasePlatform();
+
         $index = $table->getIndex('test');
-        $this->schemaManager->dropIndex($index->getName(), $table->getName());
-        $this->schemaManager->createIndex($index, $table->getName());
+        $this->schemaManager->dropIndex(
+            $index->getObjectName()->toSQL($platform),
+            $table->getObjectName()->toSQL($platform),
+        );
+
+        $this->schemaManager->createIndex(
+            $index,
+            $table->getObjectName()->toSQL($platform),
+        );
         $tableIndexes = $this->schemaManager->listTableIndexes('test_create_index');
 
-        self::assertEquals('test', strtolower($tableIndexes['test']->getName()));
+        $this->assertUnqualifiedNameEquals(
+            UnqualifiedName::unquoted('test'),
+            $tableIndexes['test']->getObjectName(),
+        );
         self::assertEquals(['test'], array_map('strtolower', $tableIndexes['test']->getColumns()));
         self::assertTrue($tableIndexes['test']->isUnique());
         self::assertFalse($tableIndexes['test']->isPrimary());
@@ -510,12 +555,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
+        $constraintName = UnqualifiedName::quoted('uniq_id');
+
         $uniqueConstraint = UniqueConstraint::editor()
-            ->setUnquotedName('uniq_id')
+            ->setName($constraintName)
             ->setUnquotedColumnNames('id')
             ->create();
 
-        $this->schemaManager->createUniqueConstraint($uniqueConstraint, $table->getName());
+        $platform = $this->connection->getDatabasePlatform();
+
+        $this->schemaManager->createUniqueConstraint(
+            $uniqueConstraint,
+            $table->getObjectName()->toSQL($platform),
+        );
 
         // there's currently no API for introspecting unique constraints,
         // so introspect the underlying indexes instead
@@ -528,7 +580,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertEqualsIgnoringCase('uniq_id', $index->getName());
         self::assertTrue($index->isUnique());
 
-        $this->schemaManager->dropUniqueConstraint($uniqueConstraint->getName(), $table->getName());
+        $this->schemaManager->dropUniqueConstraint(
+            $constraintName->toSQL($platform),
+            $table->getObjectName()->toSQL($platform),
+        );
 
         $indexes = $this->schemaManager->listTableIndexes('test_unique_constraint');
         self::assertEmpty($indexes);
@@ -731,10 +786,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $views = $this->schemaManager->listViews();
 
-        $filtered = array_values($this->filterElementsByName($views, $name));
-        self::assertCount(1, $filtered);
+        $found = $this->findObjectByShortestName($views, $name);
+        self::assertNotNull($found);
 
-        self::assertStringContainsString('view_test_table', $filtered[0]->getSql());
+        self::assertStringContainsString('view_test_table', $found->getSql());
     }
 
     public function testUpdateSchemaWithForeignKeyRenaming(): void
@@ -789,8 +844,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             )
             ->create();
 
-        $this->dropTableIfExists($tableFK->getName());
-        $this->dropTableIfExists($table->getName());
+        $platform = $this->connection->getDatabasePlatform();
+
+        $this->dropTableIfExists($tableFK->getObjectName()->toSQL($platform));
+        $this->dropTableIfExists($table->getObjectName()->toSQL($platform));
 
         $this->schemaManager->createTable($table);
         $this->schemaManager->createTable($tableFK);
@@ -832,7 +889,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $diff = $this->schemaManager->createComparator()
             ->compareTables(
-                $this->schemaManager->introspectTable($tableFK->getName()),
+                $this->schemaManager->introspectTable($tableFK->getObjectName()->toString()),
                 $tableFKNew,
             );
 
@@ -890,8 +947,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             )
             ->create();
 
-        $this->dropTableIfExists($foreignTable->getName());
-        $this->dropTableIfExists($primaryTable->getName());
+        $platform = $this->connection->getDatabasePlatform();
+
+        $this->dropTableIfExists($foreignTable->getObjectName()->toSQL($platform));
+        $this->dropTableIfExists($primaryTable->getObjectName()->toSQL($platform));
 
         $this->schemaManager->createTable($primaryTable);
         $this->schemaManager->createTable($foreignTable);
@@ -1376,20 +1435,15 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->schemaManager->createSequence($sequence1);
         $this->schemaManager->createSequence($sequence2);
 
-        /** @var Sequence[] $actualSequences */
-        $actualSequences = [];
-        foreach ($this->schemaManager->listSequences() as $sequence) {
-            $actualSequences[$sequence->getName()] = $sequence;
-        }
+        $actualSequences = $this->schemaManager->listSequences();
+        $actualSequence1 = $this->findObjectByShortestName($actualSequences, $sequence1Name);
+        $actualSequence2 = $this->findObjectByShortestName($actualSequences, $sequence2Name);
 
-        $actualSequence1 = $actualSequences[$sequence1Name];
-        $actualSequence2 = $actualSequences[$sequence2Name];
-
-        self::assertSame($sequence1Name, $actualSequence1->getName());
+        self::assertNotNull($actualSequence1);
         self::assertEquals($sequence1AllocationSize, $actualSequence1->getAllocationSize());
         self::assertEquals($sequence1InitialValue, $actualSequence1->getInitialValue());
 
-        self::assertSame($sequence2Name, $actualSequence2->getName());
+        self::assertNotNull($actualSequence2);
         self::assertEquals($sequence2AllocationSize, $actualSequence2->getAllocationSize());
         self::assertEquals($sequence2InitialValue, $actualSequence2->getInitialValue());
     }
@@ -1408,20 +1462,16 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $sequence               = new Sequence($sequenceName, $sequenceAllocationSize, $sequenceInitialValue);
 
         try {
-            $this->schemaManager->dropSequence($sequence->getName());
+            $this->schemaManager->dropSequence(
+                $sequence->getObjectName()
+                    ->toSQL($platform),
+            );
         } catch (DatabaseObjectNotFoundException) {
         }
 
         $this->schemaManager->createSequence($sequence);
 
-        $createdSequence = array_values(
-            array_filter(
-                $this->schemaManager->listSequences(),
-                static function (Sequence $sequence) use ($sequenceName): bool {
-                    return strcasecmp($sequence->getName(), $sequenceName) === 0;
-                },
-            ),
-        )[0] ?? null;
+        $createdSequence = $this->findObjectByShortestName($this->schemaManager->listSequences(), $sequenceName);
 
         self::assertNotNull($createdSequence);
 
@@ -1555,7 +1605,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $tables = $this->schemaManager->listTables();
 
-        $user = $this->findTableByName($tables, 'user');
+        $user = $this->findObjectByShortestName($tables, 'user');
         self::assertNotNull($user);
         self::assertCount(2, $user->getColumns());
         self::assertCount(2, $user->getIndexes());
@@ -1908,18 +1958,6 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertCount(1, $columns);
     }
 
-    /** @param list<Table> $tables */
-    protected function findTableByName(array $tables, string $name): ?Table
-    {
-        foreach ($tables as $table) {
-            if (strtolower($table->getName()) === $name) {
-                return $table;
-            }
-        }
-
-        return null;
-    }
-
     /** @throws Exception */
     public function testDefaultSchemaName(): void
     {
@@ -1982,7 +2020,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertContains('nested.schematable', $tableNames);
 
         $tables = $this->schemaManager->listTables();
-        self::assertNotNull($this->findTableByName($tables, 'nested.schematable'));
+        self::assertNotNull($this->findObjectByName($tables, 'nested.schematable'));
 
         $nestedSchemaTable = $this->schemaManager->introspectTable('nested.schematable');
         self::assertTrue($nestedSchemaTable->hasColumn('id'));
