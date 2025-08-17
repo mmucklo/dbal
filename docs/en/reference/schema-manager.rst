@@ -139,7 +139,12 @@ Now you can loop over the array inspecting each index object:
 
     <?php
     foreach ($indexes as $index) {
-        echo $index->getObjectName()->toString() . ': ' . ($index->isUnique() ? 'unique' : 'not unique') . PHP_EOL;
+        echo $index->getObjectName()->toString() . ': ' . match($index->getType()) {
+            IndexType::REGULAR  => 'regular',
+            IndexType::UNIQUE   => 'unique',
+            IndexType::FULLTEXT => 'fulltext',
+            IndexType::SPATIAL  => 'spatial',
+        } . PHP_EOL;
     }
 
 listTables()
