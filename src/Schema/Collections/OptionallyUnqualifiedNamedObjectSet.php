@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Doctrine\DBAL\Schema\Collections;
 
-use ArrayIterator;
 use Doctrine\DBAL\Schema\Collections\Exception\ObjectAlreadyExists;
 use Doctrine\DBAL\Schema\Collections\Exception\ObjectDoesNotExist;
 use Doctrine\DBAL\Schema\Name\UnqualifiedName;
@@ -115,7 +114,7 @@ final class OptionallyUnqualifiedNamedObjectSet implements ObjectSet
     /** {@inheritDoc} */
     public function getIterator(): Traversable
     {
-        return new ArrayIterator($this->elements);
+        yield from $this->elements;
     }
 
     /**
