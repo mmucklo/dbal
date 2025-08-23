@@ -18,7 +18,7 @@ an object by name, use `Table::getIndex()`, `Table::getUniqueConstraint()` or `T
 ## Deprecated `AbstractAsset::getName()`
 
 The `AbstractAsset::getName()` method has been deprecated. Instead, use `NamedObject::getObjectName()` or 
-`OptionallyQualifiedName::getObjectName()` to get the object representation of the name. SQL context, convert the
+`OptionallyQualifiedName::getObjectName()` to get the object representation of the name. In SQL context, convert the
 resulting `Name` to SQL using `Name::toSQL()`. In other contexts, convert the resulting name to string using
 `Name::toString()`.
 
