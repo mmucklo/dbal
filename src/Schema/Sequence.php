@@ -15,6 +15,7 @@ use function sprintf;
 /**
  * Sequence structure.
  *
+ * @final
  * @extends AbstractNamedObject<OptionallyQualifiedName>
  */
 class Sequence extends AbstractNamedObject

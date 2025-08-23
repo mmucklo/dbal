@@ -8,6 +8,15 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated extension of schema classes
+
+Extending the following classes has been deprecated. Use them directly.
+
+- `Schema`
+- `Sequence`
+- `Table`
+- `View`
+
 ## Deprecated features of `Table::getIndexes()`, `Table::getUniqueConstraints()` and `Table::getForeignKeys()`
 
 Using the keys of the arrays returned by `Table::getIndexes()`, `Table::getUniqueConstraints()` and

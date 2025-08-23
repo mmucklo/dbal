@@ -52,6 +52,7 @@ use function strtolower;
  * execute them. Only the queries for the currently connected database are
  * executed.
  *
+ * @final
  * @extends AbstractAsset<UnqualifiedName>
  */
 class Schema extends AbstractAsset
