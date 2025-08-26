@@ -36,11 +36,19 @@ class SequenceTest extends TestCase
             )
             ->create();
 
-        $sequence  = new Sequence('foo_id_seq');
-        $sequence2 = new Sequence('bar_id_seq');
-        $sequence3 = new Sequence('other.foo_id_seq');
+        $sequence1 = Sequence::editor()
+            ->setUnquotedName('foo_id_seq')
+            ->create();
 
-        self::assertTrue($sequence->isAutoIncrementsFor($table));
+        $sequence2 = Sequence::editor()
+            ->setUnquotedName('bar_id_seq')
+            ->create();
+
+        $sequence3 = Sequence::editor()
+            ->setUnquotedName('foo_id_seq', 'other')
+            ->create();
+
+        self::assertTrue($sequence1->isAutoIncrementsFor($table));
         self::assertFalse($sequence2->isAutoIncrementsFor($table));
         self::assertFalse($sequence3->isAutoIncrementsFor($table));
     }
@@ -63,11 +71,25 @@ class SequenceTest extends TestCase
             )
             ->create();
 
-        $sequence  = new Sequence('foo_id_seq');
-        $sequence1 = new Sequence('foo_ID_seq');
-        $sequence2 = new Sequence('bar_id_seq');
-        $sequence3 = new Sequence('bar_ID_seq');
-        $sequence4 = new Sequence('other.foo_id_seq');
+        $sequence = Sequence::editor()
+            ->setUnquotedName('foo_id_seq')
+            ->create();
+
+        $sequence1 = Sequence::editor()
+            ->setUnquotedName('foo_ID_seq')
+            ->create();
+
+        $sequence2 = Sequence::editor()
+            ->setUnquotedName('bar_id_seq')
+            ->create();
+
+        $sequence3 = Sequence::editor()
+            ->setUnquotedName('bar_ID_seq')
+            ->create();
+
+        $sequence4 = Sequence::editor()
+            ->setUnquotedName('foo_id_seq', 'other')
+            ->create();
 
         self::assertTrue($sequence->isAutoIncrementsFor($table));
         self::assertTrue($sequence1->isAutoIncrementsFor($table));

@@ -24,6 +24,12 @@ class Sequence extends AbstractNamedObject
 
     protected int $initialValue = 1;
 
+    /**
+     * @internal Use {@link Sequence::editor()} to instantiate an editor and {@link SequenceEditor::create()} to create
+     *           a sequence.
+     *
+     * @param ?non-negative-int $cache
+     */
     public function __construct(
         string $name,
         int $allocationSize = 1,
@@ -31,6 +37,14 @@ class Sequence extends AbstractNamedObject
         protected ?int $cache = null,
     ) {
         parent::__construct($name);
+
+        if ($cache < 0) {
+            Deprecation::triggerIfCalledFromOutside(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7108',
+                'Passing a negative value as sequence cache size is deprecated.',
+            );
+        }
 
         $this->setAllocationSize($allocationSize);
         $this->setInitialValue($initialValue);
@@ -51,9 +65,27 @@ class Sequence extends AbstractNamedObject
         return $this->initialValue;
     }
 
+    /**
+     * @deprecated Use {@see getCacheSize()} instead.
+     *
+     * @return ?non-negative-int
+     */
     public function getCache(): ?int
     {
+        Deprecation::triggerIfCalledFromOutside(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/7108',
+            '%s is deprecated, use `getCacheSize()` instead.',
+            __METHOD__,
+        );
+
         return $this->cache;
+    }
+
+    /** @return ?non-negative-int */
+    public function getCacheSize(): ?int
+    {
+        return $this->getCache();
     }
 
     public function setAllocationSize(int $allocationSize): self
@@ -70,6 +102,7 @@ class Sequence extends AbstractNamedObject
         return $this;
     }
 
+    /** @param non-negative-int $cache */
     public function setCache(int $cache): self
     {
         $this->cache = $cache;
@@ -117,5 +150,25 @@ class Sequence extends AbstractNamedObject
         $tableSequenceName = sprintf('%s_%s_seq', $tableName, $column->getShortestName($table->getNamespaceName()));
 
         return $tableSequenceName === $sequenceName;
+    }
+
+    /**
+     * Instantiates a new sequence editor.
+     */
+    public static function editor(): SequenceEditor
+    {
+        return new SequenceEditor();
+    }
+
+    /**
+     * Instantiates a new sequence editor and initializes it with the sequence's properties.
+     */
+    public function edit(): SequenceEditor
+    {
+        return self::editor()
+            ->setName($this->getObjectName())
+            ->setAllocationSize($this->getAllocationSize())
+            ->setInitialValue($this->getInitialValue())
+            ->setCacheSize($this->getCacheSize());
     }
 }

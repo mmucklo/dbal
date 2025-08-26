@@ -107,7 +107,11 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $name = 'create_sequences_test_seq';
 
-        $this->schemaManager->createSequence(new Sequence($name));
+        $this->schemaManager->createSequence(
+            Sequence::editor()
+                ->setUnquotedName($name)
+                ->create(),
+        );
 
         self::assertNotNull($this->findObjectByShortestName($this->schemaManager->listSequences(), $name));
     }
@@ -157,7 +161,11 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         }
 
         $this->schemaManager->createSequence(
-            new Sequence('list_sequences_test_seq', 20, 10),
+            Sequence::editor()
+                ->setUnquotedName('list_sequences_test_seq')
+                ->setAllocationSize(20)
+                ->setInitialValue(10)
+                ->create(),
         );
 
         $createdSequence = $this->findObjectByShortestName(
@@ -1429,8 +1437,18 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $sequence2Name           = 'sequence_2';
         $sequence2AllocationSize = 3;
         $sequence2InitialValue   = 4;
-        $sequence1               = new Sequence($sequence1Name, $sequence1AllocationSize, $sequence1InitialValue);
-        $sequence2               = new Sequence($sequence2Name, $sequence2AllocationSize, $sequence2InitialValue);
+
+        $sequence1 = Sequence::editor()
+            ->setUnquotedName($sequence1Name)
+            ->setAllocationSize($sequence1AllocationSize)
+            ->setInitialValue($sequence1InitialValue)
+            ->create();
+
+        $sequence2 = Sequence::editor()
+            ->setUnquotedName($sequence2Name)
+            ->setAllocationSize($sequence2AllocationSize)
+            ->setInitialValue($sequence2InitialValue)
+            ->create();
 
         $this->schemaManager->createSequence($sequence1);
         $this->schemaManager->createSequence($sequence2);
@@ -1459,7 +1477,12 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $sequenceName           = 'sequence_auto_detect_test';
         $sequenceAllocationSize = 5;
         $sequenceInitialValue   = 10;
-        $sequence               = new Sequence($sequenceName, $sequenceAllocationSize, $sequenceInitialValue);
+
+        $sequence = Sequence::editor()
+            ->setUnquotedName($sequenceName)
+            ->setAllocationSize($sequenceAllocationSize)
+            ->setInitialValue($sequenceInitialValue)
+            ->create();
 
         try {
             $this->schemaManager->dropSequence(
