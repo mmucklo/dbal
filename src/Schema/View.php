@@ -11,6 +11,7 @@ use Doctrine\DBAL\Schema\Name\Parsers;
 /**
  * Representation of a Database View.
  *
+ * @final
  * @extends AbstractNamedObject<OptionallyQualifiedName>
  */
 class View extends AbstractNamedObject

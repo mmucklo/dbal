@@ -8,6 +8,15 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated extension of schema classes
+
+Extending the following classes has been deprecated. Use them directly.
+
+- `Schema`
+- `Sequence`
+- `Table`
+- `View`
+
 ## Deprecated features of `Table::getIndexes()`, `Table::getUniqueConstraints()` and `Table::getForeignKeys()`
 
 Using the keys of the arrays returned by `Table::getIndexes()`, `Table::getUniqueConstraints()` and
@@ -18,7 +27,7 @@ an object by name, use `Table::getIndex()`, `Table::getUniqueConstraint()` or `T
 ## Deprecated `AbstractAsset::getName()`
 
 The `AbstractAsset::getName()` method has been deprecated. Instead, use `NamedObject::getObjectName()` or 
-`OptionallyQualifiedName::getObjectName()` to get the object representation of the name. SQL context, convert the
+`OptionallyQualifiedName::getObjectName()` to get the object representation of the name. In SQL context, convert the
 resulting `Name` to SQL using `Name::toSQL()`. In other contexts, convert the resulting name to string using
 `Name::toString()`.
 
