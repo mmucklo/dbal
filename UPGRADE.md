@@ -8,6 +8,13 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated features of `Table::getIndexes()`, `Table::getUniqueConstraints()` and `Table::getForeignKeys()`
+
+Using the keys of the arrays returned by `Table::getIndexes()`, `Table::getUniqueConstraints()` and
+`Table::getForeignKeys()` as index or constraint names is deprecated. Instead, retrieve the name from the index or
+constraint object using `NamedObject::getObjectName()` or `OptionallyNamedObject::getObjectName()`. In order to retrieve
+an object by name, use `Table::getIndex()`, `Table::getUniqueConstraint()` or `Table::getForeignKey()` respectively.
+
 ## Deprecated `AbstractAsset::getName()`
 
 The `AbstractAsset::getName()` method has been deprecated. Instead, use `NamedObject::getObjectName()` or 
