@@ -235,7 +235,11 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $sql = 'SELECT * FROM test_table_for_view';
 
-        $view = new View('test_view', $sql);
+        $view = View::editor()
+            ->setUnquotedName('test_view')
+            ->setSQL($sql)
+            ->create();
+
         $this->schemaManager->createView($view);
 
         $tables = $this->schemaManager->listTables();
@@ -788,7 +792,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $name = 'doctrine_test_view';
         $sql  = 'SELECT * FROM view_test_table';
 
-        $view = new View($name, $sql);
+        $view = View::editor()
+            ->setUnquotedName($name)
+            ->setSQL($sql)
+            ->create();
 
         $this->schemaManager->createView($view);
 
