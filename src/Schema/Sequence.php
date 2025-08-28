@@ -88,23 +88,50 @@ class Sequence extends AbstractNamedObject
         return $this->getCache();
     }
 
+    /** @deprecated Use {@see edit()} and {@see SequenceEditor::setAllocationSize()} instead. */
     public function setAllocationSize(int $allocationSize): self
     {
+        Deprecation::triggerIfCalledFromOutside(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/7115',
+            '%s is deprecated. Use Sequence::edit() and SequenceEditor::setAllocationSize() instead.',
+            __METHOD__,
+        );
+
         $this->allocationSize = $allocationSize;
 
         return $this;
     }
 
+    /** @deprecated Use {@see edit()} and {@see SequenceEditor::setInitialValue()} instead. */
     public function setInitialValue(int $initialValue): self
     {
+        Deprecation::triggerIfCalledFromOutside(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/7115',
+            '%s is deprecated. Use Sequence::edit() and SequenceEditor::setInitialValue() instead.',
+            __METHOD__,
+        );
+
         $this->initialValue = $initialValue;
 
         return $this;
     }
 
-    /** @param non-negative-int $cache */
+    /**
+     * @deprecated Use {@see edit()} and {@see SequenceEditor::setCacheSize()} instead.
+     *
+     * @param non-negative-int $cache
+     */
     public function setCache(int $cache): self
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/7115',
+            '%s is deprecated. Use Sequence::edit() and SequenceEditor::setCacheSize() instead.',
+            __METHOD__,
+        );
+
         $this->cache = $cache;
 
         return $this;
