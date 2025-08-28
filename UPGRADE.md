@@ -8,6 +8,11 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated `View` features
+
+The `View` constructor has been marked as internal. Use `View::editor()` to instantiate an editor and
+`ViewEditor::create()` to create a view.
+
 ## Deprecated `Sequence` features
 
 1. The `Sequence` constructor has been marked as internal. Use `Sequence::editor()` to instantiate an editor and
