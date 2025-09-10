@@ -137,8 +137,17 @@ abstract class AbstractAsset
         if ($input !== '') {
             try {
                 $parsedName = $this->getNameParser()->parse($input);
-            } catch (Throwable $e) {
+            } catch (NotImplemented $e) {
                 Deprecation::trigger(
+                    'doctrine/dbal',
+                    'https://github.com/doctrine/dbal/pull/6592',
+                    'Unable to parse object name: %s.',
+                    $e->getMessage(),
+                );
+
+                return;
+            } catch (Throwable $e) {
+                Deprecation::triggerIfCalledFromOutside(
                     'doctrine/dbal',
                     'https://github.com/doctrine/dbal/pull/6592',
                     'Unable to parse object name: %s.',

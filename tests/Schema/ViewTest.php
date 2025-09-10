@@ -21,13 +21,6 @@ class ViewTest extends TestCase
         new View('', '');
     }
 
-    public function testOverqualifiedName(): void
-    {
-        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/6592');
-
-        new View('warehouse.inventory.available_products', '');
-    }
-
     /** @throws Exception */
     public function testGetUnqualifiedObjectName(): void
     {
