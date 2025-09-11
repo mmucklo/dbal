@@ -40,12 +40,6 @@ class AbstractAssetTest extends TestCase
             ['"_".id', new OraclePlatform()],
             ['"_".ID', new PostgreSQLPlatform()],
 
-            // parse error
-            ['table.', new MySQLPlatform()],
-            ['"table', new MySQLPlatform()],
-            ['table"', new MySQLPlatform()],
-            [' ', new MySQLPlatform()],
-
             // incompatible parser behavior
             ['"example.com"', new MySQLPlatform()],
         ];

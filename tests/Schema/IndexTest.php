@@ -190,13 +190,6 @@ class IndexTest extends TestCase
         new Index(null, ['user_id']);
     }
 
-    public function testQualifiedName(): void
-    {
-        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/6592');
-
-        new Index('auth.idx_user_id', ['user_id']);
-    }
-
     public function testGetObjectName(): void
     {
         $index = new Index('idx_user_id', ['user_id']);
