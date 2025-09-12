@@ -156,6 +156,7 @@ jobs:
           - "10.11" # LTS (Feb 2028) We have code specific to ^10.10
           - "11.4"  # LTS (May 2029)
           - "11.8"  # LTS (Jun 2028)
+          - "12.0"  # Rolling Release (Q4 2025)
         extension:
           - "mysqli"
           - "pdo_mysql"
@@ -246,9 +247,7 @@ jobs:
       matrix:
         php-version:
           - "8.2"
-          - "8.3"
-          # The DB2 workflow currently segfaults with PHP 8.4
-          # - "8.4"
+          - "8.4"
 
   development-deps:
     name: "PHPUnit with PDO_SQLite and development dependencies"
