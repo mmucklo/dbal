@@ -105,13 +105,6 @@ class SequenceTest extends TestCase
         new Sequence('');
     }
 
-    public function testOverqualifiedName(): void
-    {
-        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/6592');
-
-        new Sequence('identity.auth.user_id_seq');
-    }
-
     /** @throws Exception */
     public function testGetUnqualifiedObjectName(): void
     {

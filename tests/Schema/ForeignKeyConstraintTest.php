@@ -89,13 +89,6 @@ class ForeignKeyConstraintTest extends TestCase
         self::assertSame($fk1->onDelete(), $fk2->onDelete());
     }
 
-    public function testQualifiedName(): void
-    {
-        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/6592');
-
-        new ForeignKeyConstraint(['user_id'], 'users', ['id'], 'auth.fk_user_id');
-    }
-
     /** @throws Exception */
     public function testGetNonNullObjectName(): void
     {

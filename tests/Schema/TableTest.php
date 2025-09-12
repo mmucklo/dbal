@@ -1618,13 +1618,6 @@ class TableTest extends TestCase
         $table->dropColumn('id');
     }
 
-    public function testOverqualifiedName(): void
-    {
-        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/6592');
-
-        new Table('warehouse.inventory.products');
-    }
-
     /** @throws Exception */
     public function testGetUnqualifiedObjectName(): void
     {

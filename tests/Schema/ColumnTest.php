@@ -171,17 +171,6 @@ class ColumnTest extends TestCase
     }
 
     /** @throws Exception */
-    public function testQualifiedName(): void
-    {
-        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/6592');
-
-        Column::editor()
-            ->setUnquotedName('t.id')
-            ->setType(Type::getType(Types::INTEGER))
-            ->create();
-    }
-
-    /** @throws Exception */
     public function testGetObjectName(): void
     {
         $column = Column::editor()
