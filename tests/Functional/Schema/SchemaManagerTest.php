@@ -207,7 +207,7 @@ final class SchemaManagerTest extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $table = $this->schemaManager->introspectTable('test_autoincrement');
+        $table = $this->schemaManager->introspectTableByUnquotedName('test_autoincrement');
 
         self::assertSame($autoincrement, $table->getColumn('id')->getAutoincrement());
     }
@@ -250,7 +250,7 @@ final class SchemaManagerTest extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $table = $this->schemaManager->introspectTable('test_autoincrement');
+        $table = $this->schemaManager->introspectTableByUnquotedName('test_autoincrement');
 
         self::assertSame($autoincrement, $table->getColumn('id1')->getAutoincrement());
         self::assertFalse($table->getColumn('id2')->getAutoincrement());

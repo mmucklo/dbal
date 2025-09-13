@@ -22,6 +22,7 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
+use Doctrine\DBAL\Schema\Metadata\MetadataProvider;
 use Doctrine\DBAL\Schema\Name\UnquotedIdentifierFolding;
 use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\Sequence;
@@ -2440,6 +2441,16 @@ abstract class AbstractPlatform
         }
 
         return $this->unquotedIdentifierFolding;
+    }
+
+    /**
+     * Creates a metadata provider that can be used access the metadata of the underlying database schema.
+     *
+     * @throws Exception
+     */
+    public function createMetadataProvider(Connection $connection): MetadataProvider
+    {
+        throw NotSupported::new(__METHOD__);
     }
 
     /**

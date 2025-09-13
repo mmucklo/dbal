@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\Exception\NotSupported;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\SQLiteKeywords;
+use Doctrine\DBAL\Platforms\SQLite\SQLiteMetadataProvider;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Exception\ColumnDoesNotExist;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
@@ -967,6 +968,11 @@ class SQLitePlatform extends AbstractPlatform
         }
 
         return $primaryIndex;
+    }
+
+    public function createMetadataProvider(Connection $connection): SQLiteMetadataProvider
+    {
+        return new SQLiteMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): SQLiteSchemaManager

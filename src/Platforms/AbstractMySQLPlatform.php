@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\InvalidColumnType\ColumnValuesRequired;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\MySQLKeywords;
+use Doctrine\DBAL\Platforms\MySQL\MySQLMetadataProvider;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\MySQLSchemaManager;
@@ -871,6 +872,11 @@ abstract class AbstractMySQLPlatform extends AbstractPlatform
         );
 
         return true;
+    }
+
+    public function createMetadataProvider(Connection $connection): MySQLMetadataProvider
+    {
+        return new MySQLMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): MySQLSchemaManager

@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\InvalidColumnType\ColumnLengthRequired;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\OracleKeywords;
+use Doctrine\DBAL\Platforms\Oracle\OracleMetadataProvider;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
@@ -852,6 +853,11 @@ SQL,
     public function getBlobTypeDeclarationSQL(array $column): string
     {
         return 'BLOB';
+    }
+
+    public function createMetadataProvider(Connection $connection): OracleMetadataProvider
+    {
+        return new OracleMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): OracleSchemaManager

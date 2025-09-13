@@ -7,6 +7,7 @@ namespace Doctrine\DBAL\Platforms;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\PostgreSQLKeywords;
+use Doctrine\DBAL\Platforms\PostgreSQL\PostgreSQLMetadataProvider;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
@@ -822,6 +823,11 @@ class PostgreSQLPlatform extends AbstractPlatform
     public function getJsonbTypeDeclarationSQL(array $column): string
     {
         return 'JSONB';
+    }
+
+    public function createMetadataProvider(Connection $connection): PostgreSQLMetadataProvider
+    {
+        return new PostgreSQLMetadataProvider($connection, $this);
     }
 
     public function createSchemaManager(Connection $connection): PostgreSQLSchemaManager

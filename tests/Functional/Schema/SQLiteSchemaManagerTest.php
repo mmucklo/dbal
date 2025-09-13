@@ -11,6 +11,7 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
+use Doctrine\DBAL\Schema\Name\UnqualifiedName;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\SQLiteSchemaManager;
 use Doctrine\DBAL\Schema\Table;
@@ -21,7 +22,6 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\Deprecations\PHPUnit\VerifyDeprecations;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-use function array_keys;
 use function array_map;
 use function array_shift;
 use function array_values;
@@ -39,11 +39,11 @@ class SQLiteSchemaManagerTest extends SchemaManagerFunctionalTestCase
     /**
      * SQLITE does not support databases.
      */
-    public function testListDatabases(): void
+    public function testIntrospectDatabaseNames(): void
     {
         $this->expectException(Exception::class);
 
-        $this->schemaManager->listDatabases();
+        $this->schemaManager->introspectDatabaseNames();
     }
 
     public function createListTableColumns(): Table
@@ -142,12 +142,12 @@ EOS);
 
         $this->dropAndCreateTable($table);
 
-        $columns = $this->schemaManager->listTableColumns('test_collation');
+        [$id, $text, $foo, $bar] = $this->schemaManager->introspectTableColumnsByUnquotedName('test_collation');
 
-        self::assertNull($columns['id']->getCollation());
-        self::assertEquals('BINARY', $columns['text']->getCollation());
-        self::assertEquals('BINARY', $columns['foo']->getCollation());
-        self::assertEquals('NOCASE', $columns['bar']->getCollation());
+        self::assertNull($id->getCollation());
+        self::assertEquals('BINARY', $text->getCollation());
+        self::assertEquals('BINARY', $foo->getCollation());
+        self::assertEquals('NOCASE', $bar->getCollation());
     }
 
     /**
@@ -177,18 +177,16 @@ SQL;
 
         $this->connection->executeStatement($sql);
 
-        $columns = $this->schemaManager->listTableColumns('dbal_1779');
+        $columns = $this->schemaManager->introspectTableColumnsByUnquotedName('dbal_1779');
 
         self::assertCount(2, $columns);
+        [$foo, $bar] = $columns;
 
-        self::assertArrayHasKey('foo', $columns);
-        self::assertArrayHasKey('bar', $columns);
+        self::assertSame(Type::getType(Types::STRING), $foo->getType());
+        self::assertSame(Type::getType(Types::TEXT), $bar->getType());
 
-        self::assertSame(Type::getType(Types::STRING), $columns['foo']->getType());
-        self::assertSame(Type::getType(Types::TEXT), $columns['bar']->getType());
-
-        self::assertSame(64, $columns['foo']->getLength());
-        self::assertSame(100, $columns['bar']->getLength());
+        self::assertSame(64, $foo->getLength());
+        self::assertSame(100, $bar->getLength());
     }
 
     public function testListTableColumnsWithMixedCaseInTypeDeclarations(): void
@@ -202,15 +200,13 @@ SQL;
 
         $this->connection->executeStatement($sql);
 
-        $columns = $this->schemaManager->listTableColumns('dbal_mixed');
+        $columns = $this->schemaManager->introspectTableColumnsByUnquotedName('dbal_mixed');
 
         self::assertCount(2, $columns);
+        [$foo, $bar] = $columns;
 
-        self::assertArrayHasKey('foo', $columns);
-        self::assertArrayHasKey('bar', $columns);
-
-        self::assertSame(Type::getType(Types::STRING), $columns['foo']->getType());
-        self::assertSame(Type::getType(Types::TEXT), $columns['bar']->getType());
+        self::assertSame(Type::getType(Types::STRING), $foo->getType());
+        self::assertSame(Type::getType(Types::TEXT), $bar->getType());
     }
 
     public function testPrimaryKeyAutoIncrement(): void
@@ -277,7 +273,7 @@ SQL;
         $sm = $this->connection->createSchemaManager();
         $sm->createTable($table);
 
-        self::assertSame('', $sm->introspectTable('own_column_comment')
+        self::assertSame('', $sm->introspectTableByUnquotedName('own_column_comment')
             ->getColumn('col1')
             ->getComment());
     }
@@ -336,7 +332,9 @@ SQL;
 
         $this->schemaManager->createTable($table);
 
-        self::assertSame(['a'], array_keys($this->schemaManager->listTableColumns('t')));
+        [$column] = $this->schemaManager->introspectTableColumnsByUnquotedName('t');
+
+        self::assertUnqualifiedNameEquals(UnqualifiedName::unquoted('a'), $column->getObjectName());
 
         $tableDiff = new TableDiff($table, changedColumns: [
             'a' => new ColumnDiff(
@@ -352,7 +350,9 @@ SQL;
         ]);
         $this->schemaManager->alterTable($tableDiff);
 
-        self::assertSame(['b'], array_keys($this->schemaManager->listTableColumns('t')));
+        [$column] = $this->schemaManager->introspectTableColumnsByUnquotedName('t');
+
+        self::assertUnqualifiedNameEquals(UnqualifiedName::unquoted('b'), $column->getObjectName());
     }
 
     /** @throws Exception */
@@ -621,7 +621,7 @@ SQL;
 
         $this->dropAndCreateTable($table);
 
-        $table = $this->schemaManager->introspectTable('table_with_comment');
+        $table = $this->schemaManager->introspectTableByUnquotedName('table_with_comment');
         self::assertSame('This is a comment', $table->getComment());
     }
 
@@ -637,7 +637,7 @@ SQL;
         $this->connection->executeStatement($ddl);
 
         $schemaManager = $this->connection->createSchemaManager();
-        $table         = $schemaManager->introspectTable('test_collation');
+        $table         = $schemaManager->introspectTableByUnquotedName('test_collation');
 
         self::assertSame($expectedCollation, $table->getColumn($columnName)->getCollation());
     }
@@ -827,7 +827,7 @@ SQL;
         $this->connection->executeStatement($ddl);
 
         $schemaManager = $this->connection->createSchemaManager();
-        $table         = $schemaManager->introspectTable('test_comment');
+        $table         = $schemaManager->introspectTableByUnquotedName('test_comment');
 
         self::assertSame($expectedComment, $table->getColumn($columnName)->getComment());
     }
