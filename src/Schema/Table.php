@@ -938,6 +938,14 @@ class Table extends AbstractNamedObject
             );
 
         $name = $this->normalizeIdentifier($name);
+        if (isset($this->_fkConstraints[$name])) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7125',
+                'Overwriting an existing foreign key constraint ("%s") is deprecated.',
+                $name,
+            );
+        }
 
         $this->_fkConstraints[$name] = $constraint;
 

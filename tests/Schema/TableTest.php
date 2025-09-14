@@ -1768,4 +1768,22 @@ class TableTest extends TestCase
         $this->expectException(InvalidState::class);
         $table->getPrimaryKeyConstraint();
     }
+
+    public function testOverwritingForeignKeyConstraint(): void
+    {
+        $table = Table::editor()
+            ->setUnquotedName('foo')
+            ->setColumns(
+                Column::editor()
+                    ->setUnquotedName('id')
+                    ->setTypeName(Types::INTEGER)
+                    ->create(),
+            )
+            ->create();
+
+        $table->addForeignKeyConstraint('bar', ['id'], ['id']);
+
+        $this->expectDeprecationWithIdentifier('https://github.com/doctrine/dbal/pull/7125');
+        $table->addForeignKeyConstraint('baz', ['id'], ['id']);
+    }
 }

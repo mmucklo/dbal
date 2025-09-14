@@ -8,6 +8,12 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated overwriting foreign key constraints
+
+Adding a foreign key constraint with a name that matches an existing one, whether explicitly specified or
+auto-generated, has been deprecated. In order to replace an existing constraint, drop it first
+via `dropForeignKey()`.
+
 ## Deprecated `View` features
 
 The `View` constructor has been marked as internal. Use `View::editor()` to instantiate an editor and
