@@ -700,6 +700,8 @@ class PostgreSQLPlatform extends AbstractPlatform
 
     /**
      * Get the snippet used to retrieve the default value for a given column
+     *
+     * @internal The method should be only used from within the {@see PostgreSQLSchemaManager} class hierarchy.
      */
     public function getDefaultColumnValueSQLSnippet(): string
     {
