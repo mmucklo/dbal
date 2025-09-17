@@ -8,6 +8,11 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated dropping unnamed constraints in SQLite
+
+Passing unnamed foreign key constraints as part of the `$droppedForeignKeys` argument of the `TableDiff` constructor
+has been deprecated.
+
 ## Deprecated overwriting foreign key constraints
 
 Adding a foreign key constraint with a name that matches an existing one, whether explicitly specified or

@@ -56,6 +56,17 @@ class TableDiff
             );
         }
 
+        foreach ($droppedForeignKeys as $droppedForeignKey) {
+            if ($droppedForeignKey->getName() === '') {
+                Deprecation::trigger(
+                    'doctrine/dbal',
+                    'https://github.com/doctrine/dbal/pull/7143',
+                    'Dropping a foreign key constraints without specifying its name is deprecated.',
+                );
+                break;
+            }
+        }
+
         if (count($modifiedForeignKeys) === 0) {
             return;
         }
