@@ -331,14 +331,14 @@ final readonly class SQLiteMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new IndexColumnMetadataRow(
-                null,
-                $row[0],
-                $row[1],
-                $row[2] ? IndexType::UNIQUE : IndexType::REGULAR,
-                false,
-                null,
-                $row[3],
-                null,
+                schemaName: null,
+                tableName: $row[0],
+                indexName: $row[1],
+                type: $row[2] ? IndexType::UNIQUE : IndexType::REGULAR,
+                isClustered: false,
+                predicate: null,
+                columnName: $row[3],
+                columnLength: null,
             );
         }
     }
@@ -388,11 +388,11 @@ final readonly class SQLiteMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new PrimaryKeyConstraintColumnRow(
-                null,
-                $row[0],
-                null,
-                true,
-                $row[1],
+                schemaName: null,
+                tableName: $row[0],
+                constraintName: null,
+                isClustered: true,
+                columnName: $row[1],
             );
         }
     }
@@ -498,19 +498,19 @@ SQL,
 
             foreach ($referencedColumnNames as $referencedColumnName) {
                 yield new ForeignKeyConstraintColumnMetadataRow(
-                    null,
-                    $tableName,
-                    $row[1],
-                    $name,
-                    null,
-                    $row[2],
-                    MatchType::SIMPLE,
-                    $this->createReferentialAction($row[3]),
-                    $this->createReferentialAction($row[4]),
-                    $details->isDeferrable(),
-                    $details->isDeferred(),
-                    $row[5],
-                    $referencedColumnName,
+                    referencingSchemaName: null,
+                    referencingTableName: $tableName,
+                    id: $row[1],
+                    name: $name,
+                    referencedSchemaName: null,
+                    referencedTableName: $row[2],
+                    matchType: MatchType::SIMPLE,
+                    onUpdateAction: $this->createReferentialAction($row[3]),
+                    onDeleteAction: $this->createReferentialAction($row[4]),
+                    isDeferrable: $details->isDeferrable(),
+                    isDeferred: $details->isDeferred(),
+                    referencingColumnName: $row[5],
+                    referencedColumnName: $referencedColumnName,
                 );
             }
         }

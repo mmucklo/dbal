@@ -394,14 +394,14 @@ final readonly class PostgreSQLMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new IndexColumnMetadataRow(
-                $row[0],
-                $row[1],
-                $row[2],
-                $row[3] ? IndexType::UNIQUE : IndexType::REGULAR,
-                false,
-                $row[4],
-                $row[5],
-                null,
+                schemaName: $row[0],
+                tableName: $row[1],
+                indexName: $row[2],
+                type: $row[3] ? IndexType::UNIQUE : IndexType::REGULAR,
+                isClustered: false,
+                predicate: $row[4],
+                columnName: $row[5],
+                columnLength: null,
             );
         }
     }
@@ -470,11 +470,11 @@ final readonly class PostgreSQLMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new PrimaryKeyConstraintColumnRow(
-                $row[0],
-                $row[1],
-                $row[2],
-                true,
-                $row[3],
+                schemaName: $row[0],
+                tableName: $row[1],
+                constraintName: $row[2],
+                isClustered: true,
+                columnName: $row[3],
             );
         }
     }
@@ -699,7 +699,13 @@ final readonly class PostgreSQLMetadataProvider implements MetadataProvider
         );
 
         foreach ($this->connection->iterateNumeric($sql) as $row) {
-            yield new SequenceMetadataRow($row[0], $row[1], (int) $row[2], (int) $row[3], null);
+            yield new SequenceMetadataRow(
+                schemaName: $row[0],
+                sequenceName: $row[1],
+                allocationSize: (int) $row[2],
+                initialValue: (int) $row[3],
+                cacheSize: null,
+            );
         }
     }
 

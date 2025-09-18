@@ -312,14 +312,14 @@ final readonly class OracleMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new IndexColumnMetadataRow(
-                null,
-                $row[0],
-                $row[1],
-                $row[2] === 'UNIQUE' ? IndexType::UNIQUE : IndexType::REGULAR,
-                false,
-                null,
-                $row[3],
-                null,
+                schemaName: null,
+                tableName: $row[0],
+                indexName: $row[1],
+                type: $row[2] === 'UNIQUE' ? IndexType::UNIQUE : IndexType::REGULAR,
+                isClustered: false,
+                predicate: null,
+                columnName: $row[3],
+                columnLength: null,
             );
         }
     }
@@ -372,11 +372,11 @@ final readonly class OracleMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new PrimaryKeyConstraintColumnRow(
-                null,
-                $row[0],
-                $row[1],
-                true,
-                $row[2],
+                schemaName: null,
+                tableName: $row[0],
+                constraintName: $row[1],
+                isClustered: true,
+                columnName: $row[2],
             );
         }
     }
@@ -438,19 +438,19 @@ SQL,
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new ForeignKeyConstraintColumnMetadataRow(
-                null,
-                $row[0],
-                null,
-                $row[1],
-                null,
-                $row[2],
-                MatchType::SIMPLE,
-                ReferentialAction::NO_ACTION,
-                $this->createReferentialAction($row[3]),
-                $row[4] === 'DEFERRABLE',
-                $row[5] === 'DEFERRED',
-                $row[6],
-                $row[7],
+                referencingSchemaName: null,
+                referencingTableName: $row[0],
+                id: null,
+                name: $row[1],
+                referencedSchemaName: null,
+                referencedTableName: $row[2],
+                matchType: MatchType::SIMPLE,
+                onUpdateAction: ReferentialAction::NO_ACTION,
+                onDeleteAction: $this->createReferentialAction($row[3]),
+                isDeferrable: $row[4] === 'DEFERRABLE',
+                isDeferred: $row[5] === 'DEFERRED',
+                referencingColumnName: $row[6],
+                referencedColumnName: $row[7],
             );
         }
     }
@@ -569,7 +569,13 @@ SQL,
             $cacheSize = (int) $row[3];
             assert($cacheSize > 0);
 
-            yield new SequenceMetadataRow(null, $row[0], (int) $row[1], (int) $row[2], $cacheSize);
+            yield new SequenceMetadataRow(
+                schemaName: null,
+                sequenceName: $row[0],
+                allocationSize: (int) $row[1],
+                initialValue: (int) $row[2],
+                cacheSize: $cacheSize,
+            );
         }
     }
 }

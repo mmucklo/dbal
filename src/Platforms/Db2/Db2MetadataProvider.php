@@ -272,14 +272,14 @@ final readonly class Db2MetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new IndexColumnMetadataRow(
-                null,
-                $row[0],
-                $row[1],
-                $row[2] === 'U' ? IndexType::UNIQUE : IndexType::REGULAR,
-                false,
-                null,
-                $row[3],
-                null,
+                schemaName: null,
+                tableName: $row[0],
+                indexName: $row[1],
+                type: $row[2] === 'U' ? IndexType::UNIQUE : IndexType::REGULAR,
+                isClustered: false,
+                predicate: null,
+                columnName: $row[3],
+                columnLength: null,
             );
         }
     }
@@ -333,11 +333,11 @@ final readonly class Db2MetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new PrimaryKeyConstraintColumnRow(
-                null,
-                $row[0],
-                $row[1],
-                true,
-                $row[2],
+                schemaName: null,
+                tableName: $row[0],
+                constraintName: $row[1],
+                isClustered: true,
+                columnName: $row[2],
             );
         }
     }
@@ -404,19 +404,19 @@ final readonly class Db2MetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new ForeignKeyConstraintColumnMetadataRow(
-                null,
-                $row[0],
-                null,
-                $row[1],
-                null,
-                $row[2],
-                MatchType::SIMPLE,
-                self::REFERENTIAL_ACTIONS[$row[3]],
-                self::REFERENTIAL_ACTIONS[$row[4]],
-                false,
-                false,
-                $row[5],
-                $row[6],
+                referencingSchemaName: null,
+                referencingTableName: $row[0],
+                id: null,
+                name: $row[1],
+                referencedSchemaName: null,
+                referencedTableName: $row[2],
+                matchType: MatchType::SIMPLE,
+                onUpdateAction: self::REFERENTIAL_ACTIONS[$row[3]],
+                onDeleteAction: self::REFERENTIAL_ACTIONS[$row[4]],
+                isDeferrable: false,
+                isDeferred: false,
+                referencingColumnName: $row[5],
+                referencedColumnName: $row[6],
             );
         }
     }

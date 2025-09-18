@@ -422,14 +422,14 @@ final readonly class MySQLMetadataProvider implements MetadataProvider
             }
 
             yield new IndexColumnMetadataRow(
-                null,
-                $row[0],
-                $row[1],
-                $type,
-                false,
-                null,
-                $row[4],
-                $length,
+                schemaName: null,
+                tableName: $row[0],
+                indexName: $row[1],
+                type: $type,
+                isClustered: false,
+                predicate: null,
+                columnName: $row[4],
+                columnLength: $length,
             );
         }
     }
@@ -492,11 +492,11 @@ final readonly class MySQLMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new PrimaryKeyConstraintColumnRow(
-                null,
-                $row[0],
-                $row[1],
-                true,
-                $row[2],
+                schemaName: null,
+                tableName: $row[0],
+                constraintName: $row[1],
+                isClustered: true,
+                columnName: $row[2],
             );
         }
     }
@@ -564,19 +564,19 @@ final readonly class MySQLMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new ForeignKeyConstraintColumnMetadataRow(
-                null,
-                $row[0],
-                null,
-                $row[1],
-                null,
-                $row[2],
-                MatchType::SIMPLE,
-                $this->createReferentialAction($row[3]),
-                $this->createReferentialAction($row[4]),
-                false,
-                false,
-                $row[5],
-                $row[6],
+                referencingSchemaName: null,
+                referencingTableName: $row[0],
+                id: null,
+                name: $row[1],
+                referencedSchemaName: null,
+                referencedTableName: $row[2],
+                matchType: MatchType::SIMPLE,
+                onUpdateAction: $this->createReferentialAction($row[3]),
+                onDeleteAction: $this->createReferentialAction($row[4]),
+                isDeferrable: false,
+                isDeferred: false,
+                referencingColumnName: $row[5],
+                referencedColumnName: $row[6],
             );
         }
     }

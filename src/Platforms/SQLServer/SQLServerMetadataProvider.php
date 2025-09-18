@@ -335,14 +335,14 @@ final readonly class SQLServerMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new IndexColumnMetadataRow(
-                $row[0],
-                $row[1],
-                $row[2],
-                $row[3] ? IndexType::UNIQUE : IndexType::REGULAR,
-                (int) $row[4] === 1,
-                null,
-                $row[5],
-                null,
+                schemaName: $row[0],
+                tableName: $row[1],
+                indexName: $row[2],
+                type: $row[3] ? IndexType::UNIQUE : IndexType::REGULAR,
+                isClustered: (int) $row[4] === 1,
+                predicate: null,
+                columnName: $row[5],
+                columnLength: null,
             );
         }
     }
@@ -403,11 +403,11 @@ final readonly class SQLServerMetadataProvider implements MetadataProvider
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new PrimaryKeyConstraintColumnRow(
-                $row[0],
-                $row[1],
-                $row[2],
-                (int) $row[3] === 1,
-                $row[4],
+                schemaName: $row[0],
+                tableName: $row[1],
+                constraintName: $row[2],
+                isClustered: (int) $row[3] === 1,
+                columnName: $row[4],
             );
         }
     }
@@ -478,19 +478,19 @@ SQL,
 
         foreach ($this->connection->iterateNumeric($sql, $params) as $row) {
             yield new ForeignKeyConstraintColumnMetadataRow(
-                $row[0],
-                $row[1],
-                null,
-                $row[2],
-                $row[3],
-                $row[4],
-                MatchType::SIMPLE,
-                $this->createReferentialAction($row[5]),
-                $this->createReferentialAction($row[6]),
-                false,
-                false,
-                $row[7],
-                $row[8],
+                referencingSchemaName: $row[0],
+                referencingTableName: $row[1],
+                id: null,
+                name: $row[2],
+                referencedSchemaName: $row[3],
+                referencedTableName: $row[4],
+                matchType: MatchType::SIMPLE,
+                onUpdateAction: $this->createReferentialAction($row[5]),
+                onDeleteAction: $this->createReferentialAction($row[6]),
+                isDeferrable: false,
+                isDeferred: false,
+                referencingColumnName: $row[7],
+                referencedColumnName: $row[8],
             );
         }
     }
@@ -632,7 +632,13 @@ SQL,
         SQL;
 
         foreach ($this->connection->iterateNumeric($sql) as $row) {
-            yield new SequenceMetadataRow($row[0], $row[1], (int) $row[2], (int) $row[3], null);
+            yield new SequenceMetadataRow(
+                schemaName: $row[0],
+                sequenceName: $row[1],
+                allocationSize: (int) $row[2],
+                initialValue: (int) $row[3],
+                cacheSize: null,
+            );
         }
     }
 
