@@ -8,6 +8,11 @@ awareness about deprecated code.
 
 # Upgrade to 4.4
 
+## Deprecated `TableDiff::getDroppedForeignKeys()`
+
+The `TableDiff::getDroppedForeignKeys()` method has been deprecated. Use
+`TableDiff::getDroppedForeignKeyConstraintNames()` instead.
+
 ## Deprecated `AbstractSchemaManager` methods
 
 The following `AbstractSchemaManager` methods have been deprecated:
