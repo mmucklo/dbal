@@ -48,9 +48,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 use function array_keys;
 use function array_map;
-use function array_search;
 use function array_values;
-use function current;
 use function get_debug_type;
 use function sprintf;
 use function str_starts_with;
@@ -113,7 +111,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
                 ->create(),
         );
 
-        self::assertNotNull($this->findObjectByShortestName($this->schemaManager->listSequences(), $name));
+        self::assertNotNull($this->findObjectByShortestName($this->schemaManager->introspectSequences(), $name));
     }
 
     /**
@@ -169,7 +167,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         );
 
         $createdSequence = $this->findObjectByShortestName(
-            $this->schemaManager->listSequences(),
+            $this->schemaManager->introspectSequences(),
             'list_sequences_test_seq',
         );
 
@@ -178,20 +176,24 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         self::assertSame(10, $createdSequence->getInitialValue());
     }
 
-    public function testListDatabases(): void
+    public function testIntrospectDatabaseNames(): void
     {
         try {
             $this->schemaManager->dropDatabase('test_create_database');
         } catch (DatabaseObjectNotFoundException) {
         }
 
+        $this->assertUnqualifiedNameListNotContainsUnquotedName(
+            'test_create_database',
+            $this->schemaManager->introspectDatabaseNames(),
+        );
+
         $this->schemaManager->createDatabase('test_create_database');
 
-        $databases = $this->schemaManager->listDatabases();
-
-        $databases = array_map('strtolower', $databases);
-
-        self::assertContains('test_create_database', $databases);
+        $this->assertUnqualifiedNameListContainsUnquotedName(
+            'test_create_database',
+            $this->schemaManager->introspectDatabaseNames(),
+        );
     }
 
     public function testListSchemaNames(): void
@@ -207,13 +209,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         } catch (DatabaseObjectNotFoundException) {
         }
 
-        self::assertNotContains('test_create_schema', $this->schemaManager->listSchemaNames());
+        $this->assertUnqualifiedNameListNotContainsUnquotedName(
+            'test_create_schema',
+            $this->schemaManager->introspectSchemaNames(),
+        );
 
         $this->connection->executeStatement(
             $platform->getCreateSchemaSQL('test_create_schema'),
         );
 
-        self::assertContains('test_create_schema', $this->schemaManager->listSchemaNames());
+        $this->assertUnqualifiedNameListContainsUnquotedName(
+            'test_create_schema',
+            $this->schemaManager->introspectSchemaNames(),
+        );
     }
 
     public function testListTables(): void
@@ -261,8 +269,8 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             },
         );
 
-        self::assertCount($expectedCount, $this->schemaManager->listTableNames());
-        self::assertCount($expectedCount, $this->schemaManager->listTables());
+        self::assertCount($expectedCount, $this->schemaManager->introspectTableNames());
+        self::assertCount($expectedCount, $this->schemaManager->introspectTables());
     }
 
     /** @return iterable<string, array{string, int}> */
@@ -335,89 +343,85 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $columns     = $this->schemaManager->listTableColumns('list_table_columns');
+        $columns = $this->schemaManager->introspectTableColumnsByUnquotedName('list_table_columns');
+
+        self::assertCount(7, $columns);
+
+        [$id, $test, $foo, $bar, $baz1, $baz2, $baz3] = $columns;
+
         $columnsKeys = array_keys($columns);
 
-        self::assertArrayHasKey('id', $columns);
-        self::assertEquals(0, array_search('id', $columnsKeys, true));
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('id'),
-            $columns['id']->getObjectName(),
+            $id->getObjectName(),
         );
-        self::assertInstanceOf(IntegerType::class, $columns['id']->getType());
-        self::assertEquals(false, $columns['id']->getUnsigned());
-        self::assertEquals(true, $columns['id']->getNotnull());
-        self::assertEquals(null, $columns['id']->getDefault());
+        self::assertInstanceOf(IntegerType::class, $id->getType());
+        self::assertFalse($id->getUnsigned());
+        self::assertTrue($id->getNotnull());
+        self::assertNull($id->getDefault());
 
-        self::assertArrayHasKey('test', $columns);
-        self::assertEquals(1, array_search('test', $columnsKeys, true));
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('test'),
-            $columns['test']->getObjectName(),
+            $test->getObjectName(),
         );
-        self::assertInstanceOf(StringType::class, $columns['test']->getType());
-        self::assertEquals(255, $columns['test']->getLength());
-        self::assertEquals(false, $columns['test']->getFixed());
-        self::assertEquals(false, $columns['test']->getNotnull());
-        self::assertEquals('expected default', $columns['test']->getDefault());
+        self::assertInstanceOf(StringType::class, $test->getType());
+        self::assertEquals(255, $test->getLength());
+        self::assertFalse($test->getFixed());
+        self::assertFalse($test->getNotnull());
+        self::assertEquals('expected default', $test->getDefault());
 
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('foo'),
-            $columns['foo']->getObjectName(),
+            $foo->getObjectName(),
         );
-        self::assertEquals(2, array_search('foo', $columnsKeys, true));
-        self::assertInstanceOf(TextType::class, $columns['foo']->getType());
-        self::assertEquals(false, $columns['foo']->getUnsigned());
-        self::assertEquals(false, $columns['foo']->getFixed());
-        self::assertEquals(true, $columns['foo']->getNotnull());
-        self::assertEquals(null, $columns['foo']->getDefault());
+        self::assertInstanceOf(TextType::class, $foo->getType());
+        self::assertFalse($foo->getUnsigned());
+        self::assertFalse($foo->getFixed());
+        self::assertTrue($foo->getNotnull());
+        self::assertNull($foo->getDefault());
 
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('bar'),
-            $columns['bar']->getObjectName(),
+            $bar->getObjectName(),
         );
-        self::assertEquals(3, array_search('bar', $columnsKeys, true));
-        self::assertInstanceOf(DecimalType::class, $columns['bar']->getType());
-        self::assertEquals(null, $columns['bar']->getLength());
-        self::assertEquals(10, $columns['bar']->getPrecision());
-        self::assertEquals(4, $columns['bar']->getScale());
-        self::assertEquals(false, $columns['bar']->getUnsigned());
-        self::assertEquals(false, $columns['bar']->getFixed());
-        self::assertEquals(false, $columns['bar']->getNotnull());
-        self::assertEquals(null, $columns['bar']->getDefault());
+        self::assertInstanceOf(DecimalType::class, $bar->getType());
+        self::assertNull($bar->getLength());
+        self::assertEquals(10, $bar->getPrecision());
+        self::assertEquals(4, $bar->getScale());
+        self::assertFalse($bar->getUnsigned());
+        self::assertFalse($bar->getFixed());
+        self::assertFalse($bar->getNotnull());
+        self::assertNull($bar->getDefault());
 
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('baz1'),
-            $columns['baz1']->getObjectName(),
+            $baz1->getObjectName(),
         );
-        self::assertEquals(4, array_search('baz1', $columnsKeys, true));
-        self::assertInstanceOf(DateTimeType::class, $columns['baz1']->getType());
-        self::assertEquals(true, $columns['baz1']->getNotnull());
-        self::assertEquals(null, $columns['baz1']->getDefault());
+        self::assertInstanceOf(DateTimeType::class, $baz1->getType());
+        self::assertTrue($baz1->getNotnull());
+        self::assertNull($baz1->getDefault());
 
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('baz2'),
-            $columns['baz2']->getObjectName(),
+            $baz2->getObjectName(),
         );
-        self::assertEquals(5, array_search('baz2', $columnsKeys, true));
         self::assertContains(
-            $columns['baz2']->getType()::class,
+            $baz2->getType()::class,
             [TimeType::class, DateType::class, DateTimeType::class],
         );
-        self::assertEquals(true, $columns['baz2']->getNotnull());
-        self::assertEquals(null, $columns['baz2']->getDefault());
+        self::assertTrue($baz2->getNotnull());
+        self::assertNull($baz2->getDefault());
 
         $this->assertUnqualifiedNameEquals(
             UnqualifiedName::unquoted('baz3'),
-            $columns['baz3']->getObjectName(),
+            $baz3->getObjectName(),
         );
-        self::assertEquals(6, array_search('baz3', $columnsKeys, true));
         self::assertContains(
-            $columns['baz3']->getType()::class,
+            $baz3->getType()::class,
             [TimeType::class, DateType::class, DateTimeType::class],
         );
-        self::assertEquals(true, $columns['baz3']->getNotnull());
-        self::assertEquals(null, $columns['baz3']->getDefault());
+        self::assertTrue($baz3->getNotnull());
+        self::assertNull($baz3->getDefault());
     }
 
     public function testListTableColumnsWithFixedStringColumn(): void
@@ -436,12 +440,11 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createTable($table);
 
-        $columns = $this->schemaManager->listTableColumns('test_list_table_fixed_string');
+        [$column] = $this->schemaManager->introspectTableColumnsByUnquotedName('test_list_table_fixed_string');
 
-        self::assertArrayHasKey('column_char', $columns);
-        self::assertInstanceOf(StringType::class, $columns['column_char']->getType());
-        self::assertTrue($columns['column_char']->getFixed());
-        self::assertSame(2, $columns['column_char']->getLength());
+        self::assertInstanceOf(StringType::class, $column->getType());
+        self::assertTrue($column->getFixed());
+        self::assertSame(2, $column->getLength());
     }
 
     public function testDiffListTableColumns(): void
@@ -455,7 +458,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $offlineTable = $this->createListTableColumns();
         $this->dropAndCreateTable($offlineTable);
-        $onlineTable = $this->schemaManager->introspectTable('list_table_columns');
+        $onlineTable = $this->schemaManager->introspectTableByUnquotedName('list_table_columns');
 
         self::assertTrue(
             $this->schemaManager->createComparator()
@@ -583,11 +586,10 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         // there's currently no API for introspecting unique constraints,
         // so introspect the underlying indexes instead
-        $indexes = $this->schemaManager->listTableIndexes('test_unique_constraint');
+        $indexes = $this->schemaManager->introspectTableIndexesByUnquotedName('test_unique_constraint');
         self::assertCount(1, $indexes);
 
-        $index = current($indexes);
-        self::assertNotFalse($index);
+        $index = $indexes[0];
 
         self::assertEqualsIgnoringCase('uniq_id', $index->getName());
         self::assertTrue($index->isUnique());
@@ -597,7 +599,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             $table->getObjectName()->toSQL($platform),
         );
 
-        $indexes = $this->schemaManager->listTableIndexes('test_unique_constraint');
+        $indexes = $this->schemaManager->introspectTableIndexesByUnquotedName('test_unique_constraint');
         self::assertEmpty($indexes);
     }
 
@@ -775,14 +777,22 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
             $this->connection->executeStatement($sql);
         }
 
-        //test if table is create in namespace
+        // test table created in a namespace
         $this->createTestTable('testschema.my_table_in_namespace');
-        self::assertContains('testschema.my_table_in_namespace', $this->schemaManager->listTableNames());
+        $this->assertOptionallyQualifiedNameListContainsUnquotedName(
+            'my_table_in_namespace',
+            'testschema',
+            $this->schemaManager->introspectTableNames(),
+        );
 
-        //tables without namespace should be created in default namespace
-        //default namespaces are ignored in table listings
+        // tables without a namespace should be created in the default namespace
+        // the default namespace is omitted from the names during schema introspection
         $this->createTestTable('my_table_not_in_namespace');
-        self::assertContains('my_table_not_in_namespace', $this->schemaManager->listTableNames());
+        $this->assertOptionallyQualifiedNameListContainsUnquotedName(
+            'my_table_not_in_namespace',
+            null,
+            $this->schemaManager->introspectTableNames(),
+        );
     }
 
     public function testCreateAndListViews(): void
@@ -979,7 +989,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->alterTable($diff);
 
-        $foreignTable = $this->schemaManager->introspectTable('test_rename_index_foreign');
+        $foreignTable = $this->schemaManager->introspectTableByUnquotedName('test_rename_index_foreign');
 
         self::assertFalse($foreignTable->hasIndex('rename_index_fk_idx'));
         self::assertTrue($foreignTable->hasIndex('renamed_index_fk_idx'));
@@ -1018,19 +1028,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $diff = $this->schemaManager->createComparator()
             ->compareTables(
-                $this->schemaManager->introspectTable('column_def_change_type'),
+                $this->schemaManager->introspectTableByUnquotedName('column_def_change_type'),
                 $newTable,
             );
 
         $this->schemaManager->alterTable($diff);
 
-        $columns = $this->schemaManager->listTableColumns('column_def_change_type');
+        $columns = $this->schemaManager->introspectTableColumnsByUnquotedName('column_def_change_type');
 
-        self::assertInstanceOf(IntegerType::class, $columns['col_int']->getType());
-        self::assertEquals(666, $columns['col_int']->getDefault());
+        self::assertInstanceOf(IntegerType::class, $columns[0]->getType());
+        self::assertEquals(666, $columns[0]->getDefault());
 
-        self::assertInstanceOf(StringType::class, $columns['col_string']->getType());
-        self::assertEquals('foo', $columns['col_string']->getDefault());
+        self::assertInstanceOf(StringType::class, $columns[1]->getType());
+        self::assertEquals('foo', $columns[1]->getDefault());
     }
 
     public function testListTableWithBlob(): void
@@ -1047,7 +1057,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createTable($table);
 
-        $created = $this->schemaManager->introspectTable('test_blob_table');
+        $created = $this->schemaManager->introspectTableByUnquotedName('test_blob_table');
 
         self::assertTrue($created->hasColumn('binarydata'));
         self::assertInstanceOf(BlobType::class, $created->getColumn('binarydata')->getType());
@@ -1071,12 +1081,12 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $columns = $this->schemaManager->listTableColumns('test_float_columns');
+        $columns = $this->schemaManager->introspectTableColumnsByUnquotedName('test_float_columns');
 
-        self::assertInstanceOf(FloatType::class, $columns['col_float']->getType());
-        self::assertInstanceOf(SmallFloatType::class, $columns['col_smallfloat']->getType());
-        self::assertFalse($columns['col_float']->getUnsigned());
-        self::assertFalse($columns['col_smallfloat']->getUnsigned());
+        self::assertInstanceOf(FloatType::class, $columns[0]->getType());
+        self::assertInstanceOf(SmallFloatType::class, $columns[1]->getType());
+        self::assertFalse($columns[0]->getUnsigned());
+        self::assertFalse($columns[1]->getUnsigned());
     }
 
     /**
@@ -1203,7 +1213,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($oldTable);
 
-        $oldTable = $this->schemaManager->introspectTable('col_def_lifecycle');
+        $oldTable = $this->schemaManager->introspectTableByUnquotedName('col_def_lifecycle');
 
         self::assertNull($oldTable->getColumn('id')->getDefault());
         self::assertNull($oldTable->getColumn('column1')->getDefault());
@@ -1228,18 +1238,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $diff = $this->schemaManager->createComparator()
             ->compareTables(
-                $this->schemaManager->introspectTable('col_def_lifecycle'),
+                $this->schemaManager->introspectTableByUnquotedName('col_def_lifecycle'),
                 $newTable,
             );
 
         $this->schemaManager->alterTable($diff);
 
-        $columns = $this->schemaManager->listTableColumns('col_def_lifecycle');
+        [, $column1, $column2, $column3, $column4]
+            = $this->schemaManager->introspectTableColumnsByUnquotedName('col_def_lifecycle');
 
-        self::assertSame('', $columns['column1']->getDefault());
-        self::assertNull($columns['column2']->getDefault());
-        self::assertSame('default2', $columns['column3']->getDefault());
-        self::assertNull($columns['column4']->getDefault());
+        self::assertSame('', $column1->getDefault());
+        self::assertNull($column2->getDefault());
+        self::assertSame('default2', $column3->getDefault());
+        self::assertNull($column4->getDefault());
     }
 
     public function testListTableWithBinary(): void
@@ -1263,7 +1274,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createTable($table);
 
-        $table = $this->schemaManager->introspectTable('test_binary_table');
+        $table = $this->schemaManager->introspectTableByUnquotedName('test_binary_table');
         $this->assertBinaryColumnIsValid($table, 'column_binary', 16);
         $this->assertVarBinaryColumnIsValid($table, 'column_varbinary', 32);
     }
@@ -1287,7 +1298,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
     public function testGetNonExistingTable(): void
     {
         $this->expectException(SchemaException::class);
-        $this->schemaManager->introspectTable('non_existing');
+        $this->schemaManager->introspectTableByUnquotedName('non_existing');
     }
 
     public function testListTableDetailsWithFullQualifiedTableName(): void
@@ -1360,16 +1371,19 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->dropAndCreateTable($table);
 
         self::assertEquals(
-            $this->schemaManager->listTableColumns($primaryTableName),
-            $this->schemaManager->listTableColumns($defaultSchemaName . '.' . $primaryTableName),
+            $this->schemaManager->introspectTableColumnsByUnquotedName($primaryTableName),
+            $this->schemaManager->introspectTableColumnsByUnquotedName($primaryTableName, $defaultSchemaName),
         );
         self::assertEquals(
-            $this->schemaManager->listTableIndexes($primaryTableName),
-            $this->schemaManager->listTableIndexes($defaultSchemaName . '.' . $primaryTableName),
+            $this->schemaManager->introspectTableIndexesByUnquotedName($primaryTableName),
+            $this->schemaManager->introspectTableIndexesByUnquotedName($primaryTableName, $defaultSchemaName),
         );
         self::assertEquals(
-            $this->schemaManager->listTableForeignKeys($primaryTableName),
-            $this->schemaManager->listTableForeignKeys($defaultSchemaName . '.' . $primaryTableName),
+            $this->schemaManager->introspectTableForeignKeyConstraintsByUnquotedName($primaryTableName),
+            $this->schemaManager->introspectTableForeignKeyConstraintsByUnquotedName(
+                $primaryTableName,
+                $defaultSchemaName,
+            ),
         );
     }
 
@@ -1425,11 +1439,18 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->dropAndCreateTable($primaryTable);
         $this->dropAndCreateTable($foreignTable);
 
-        $indexes = $this->schemaManager->listTableIndexes('test_list_index_impl_foreign');
-
-        self::assertCount(2, $indexes);
-        self::assertArrayHasKey('explicit_fk1_idx', $indexes);
-        self::assertArrayHasKey('idx_3d6c147fdc58d6c', $indexes);
+        $this->assertIndexListEquals([
+            Index::editor()
+                ->setName(UnqualifiedName::unquoted('IDX_3D6C147FDC58D6C'))
+                ->setColumnNames(
+                    UnqualifiedName::unquoted('fk2'),
+                )
+                ->create(),
+            Index::editor()
+                ->setName(UnqualifiedName::unquoted('explicit_fk1_idx'))
+                ->setColumnNames(UnqualifiedName::unquoted('fk1'))
+                ->create(),
+        ], $this->schemaManager->introspectTableIndexesByUnquotedName('test_list_index_impl_foreign'));
     }
 
     public function testCreateAndListSequences(): void
@@ -1460,7 +1481,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->schemaManager->createSequence($sequence1);
         $this->schemaManager->createSequence($sequence2);
 
-        $actualSequences = $this->schemaManager->listSequences();
+        $actualSequences = $this->schemaManager->introspectSequences();
         $actualSequence1 = $this->findObjectByShortestName($actualSequences, $sequence1Name);
         $actualSequence2 = $this->findObjectByShortestName($actualSequences, $sequence2Name);
 
@@ -1501,7 +1522,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->schemaManager->createSequence($sequence);
 
-        $createdSequence = $this->findObjectByShortestName($this->schemaManager->listSequences(), $sequenceName);
+        $createdSequence = $this->findObjectByShortestName($this->schemaManager->introspectSequences(), $sequenceName);
 
         self::assertNotNull($createdSequence);
 
@@ -1596,7 +1617,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $onlineTable = $this->schemaManager->introspectTable('test_partial_column_index');
+        $onlineTable = $this->schemaManager->introspectTableByUnquotedName('test_partial_column_index');
         $this->assertIndexListEquals($expected, $onlineTable->getIndexes());
     }
 
@@ -1615,7 +1636,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
-        $table = $this->schemaManager->introspectTable('table_with_comment');
+        $table = $this->schemaManager->introspectTableByUnquotedName('table_with_comment');
         self::assertSame('\'\\ Foo with control characters \'\\', $table->getComment());
     }
 
@@ -1623,7 +1644,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
     {
         $this->createReservedKeywordTables();
 
-        $user = $this->schemaManager->introspectTable('"user"');
+        $user = $this->schemaManager->introspectTableByQuotedName('user');
         self::assertCount(2, $user->getColumns());
         self::assertCount(2, $user->getIndexes());
         self::assertCount(1, $user->getForeignKeys());
@@ -1775,8 +1796,8 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
         $this->schemaManager->createTable($artists);
         $this->schemaManager->createTable($tracks);
 
-        $artists = $this->schemaManager->introspectTable('"Artists"');
-        $tracks  = $this->schemaManager->introspectTable('"Tracks"');
+        $artists = $this->schemaManager->introspectTableByQuotedName('Artists');
+        $tracks  = $this->schemaManager->introspectTableByQuotedName('Tracks');
 
         $platform = $this->connection->getDatabasePlatform();
 
@@ -1896,7 +1917,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $schemaManager->alterTable($diff);
 
-        $child = $schemaManager->introspectTable('child');
+        $child = $schemaManager->introspectTableByUnquotedName('child');
 
         self::assertFalse($child->hasIndex('idx_1'));
         self::assertTrue($child->hasIndex('idx_2'));
@@ -1978,13 +1999,13 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         $diff = $this->schemaManager->createComparator()
             ->compareTables(
-                $this->schemaManager->introspectTable('drop_column_with_default'),
+                $this->schemaManager->introspectTableByUnquotedName('drop_column_with_default'),
                 $table,
             );
 
         $this->schemaManager->alterTable($diff);
 
-        $columns = $this->schemaManager->listTableColumns('drop_column_with_default');
+        $columns = $this->schemaManager->introspectTableColumnsByUnquotedName('drop_column_with_default');
         self::assertCount(1, $columns);
     }
 
