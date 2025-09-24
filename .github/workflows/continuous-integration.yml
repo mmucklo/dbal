@@ -242,7 +242,7 @@ jobs:
           fail-fast: true
 
       - name: "Lower minimum stability"
-        run: | 
+        run: |
           composer config minimum-stability dev
           composer require --no-update --dev symfony/console:^8
 
