@@ -9,6 +9,8 @@ use Doctrine\DBAL\Schema\SqliteSchemaManager;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
+use const PHP_VERSION_ID;
+
 class SqliteSchemaManagerTest extends TestCase
 {
     /** @dataProvider getDataColumnCollation */
@@ -18,7 +20,9 @@ class SqliteSchemaManagerTest extends TestCase
 
         $manager = new SqliteSchemaManager($conn, new SqlitePlatform());
         $ref     = new ReflectionMethod($manager, 'parseColumnCollationFromSQL');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
 
         self::assertSame($collation, $ref->invoke($manager, $column, $sql));
     }
@@ -130,7 +134,9 @@ class SqliteSchemaManagerTest extends TestCase
 
         $manager = new SqliteSchemaManager($conn, new SqlitePlatform());
         $ref     = new ReflectionMethod($manager, 'parseColumnCommentFromSQL');
-        $ref->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
 
         self::assertSame($comment, $ref->invoke($manager, $column, $sql));
     }
