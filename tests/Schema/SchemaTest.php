@@ -16,6 +16,8 @@ use ReflectionProperty;
 use function current;
 use function strlen;
 
+use const PHP_VERSION_ID;
+
 class SchemaTest extends TestCase
 {
     public function testAddTable(): void
@@ -216,7 +218,9 @@ class SchemaTest extends TestCase
         $fk = current($fk);
 
         $re = new ReflectionProperty($fk, '_localTable');
-        $re->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $re->setAccessible(true);
+        }
 
         self::assertSame($schemaNew->getTable('bar'), $re->getValue($fk));
     }

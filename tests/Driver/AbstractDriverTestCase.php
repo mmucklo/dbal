@@ -14,6 +14,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use const PHP_VERSION_ID;
+
 /** @template P of AbstractPlatform */
 abstract class AbstractDriverTestCase extends TestCase
 {
@@ -55,7 +57,9 @@ abstract class AbstractDriverTestCase extends TestCase
         self::assertEquals($this->createSchemaManager($connection), $schemaManager);
 
         $re = new ReflectionProperty($schemaManager, '_conn');
-        $re->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $re->setAccessible(true);
+        }
 
         self::assertSame($connection, $re->getValue($schemaManager));
     }

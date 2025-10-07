@@ -11,6 +11,8 @@ use Doctrine\DBAL\Types\Types;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
+use const PHP_VERSION_ID;
+
 class DBAL461Test extends TestCase
 {
     public function testIssue(): void
@@ -27,7 +29,10 @@ class DBAL461Test extends TestCase
         $schemaManager = new SQLServerSchemaManager($conn, $platform);
 
         $reflectionMethod = new ReflectionMethod($schemaManager, '_getPortableTableColumnDefinition');
-        $reflectionMethod->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $reflectionMethod->setAccessible(true);
+        }
+
         $column = $reflectionMethod->invoke($schemaManager, [
             'type' => 'numeric(18,0)',
             'length' => null,

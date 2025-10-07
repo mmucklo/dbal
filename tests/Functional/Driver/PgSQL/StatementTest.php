@@ -13,6 +13,8 @@ use ReflectionProperty;
 
 use function sprintf;
 
+use const PHP_VERSION_ID;
+
 class StatementTest extends FunctionalTestCase
 {
     protected function setUp(): void
@@ -31,12 +33,16 @@ class StatementTest extends FunctionalTestCase
         $statement = $this->connection->prepare('SELECT 1');
 
         $property = new ReflectionProperty(WrapperStatement::class, 'stmt');
-        $property->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
 
         $driverStatement = $property->getValue($statement);
 
         $property = new ReflectionProperty(Statement::class, 'name');
-        $property->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
 
         $name = $property->getValue($driverStatement);
 

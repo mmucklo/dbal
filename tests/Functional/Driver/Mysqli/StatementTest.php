@@ -36,12 +36,16 @@ class StatementTest extends FunctionalTestCase
         $statement = $this->connection->prepare('SELECT 1');
 
         $property = new ReflectionProperty(WrapperStatement::class, 'stmt');
-        $property->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
 
         $driverStatement = $property->getValue($statement);
 
         $mysqliProperty = new ReflectionProperty(Statement::class, 'stmt');
-        $mysqliProperty->setAccessible(true);
+        if (PHP_VERSION_ID < 80100) {
+            $mysqliProperty->setAccessible(true);
+        }
 
         $mysqliStatement = $mysqliProperty->getValue($driverStatement);
 
