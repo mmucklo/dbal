@@ -779,9 +779,9 @@ following methods are deprecated:
 The protected property `AbstractPlatform::$doctrineTypeComments` is deprecated
 as well.
 
-## Deprecated support for IBM DB2 10.5 and older
+## Deprecated support for Db2 10.5 and older
 
-IBM DB2 10.5 and older won't be supported in DBAL 4. Consider upgrading to IBM DB2 11.1 or later.
+Db2 10.5 and older won't be supported in DBAL 4. Consider upgrading to Db2 11.1 or later.
 
 ## Deprecated support for Oracle 12c (12.2.0.1) and older
 
@@ -1447,9 +1447,9 @@ All implementations of the `VersionAwarePlatformDriver` interface have to implem
 The `Doctrine\DBAL\Platforms\MsSQLKeywords` class has been removed.
 Please use `Doctrine\DBAL\Platforms\SQLServerPlatform` instead.
 
-## BC BREAK: Removed PDO DB2 driver
+## BC BREAK: Removed PDO Db2 driver
 
-This PDO-based IBM DB2 driver (built on top of `pdo_ibm` extension) has already been unsupported as of 2.5, it has been now removed.
+This PDO-based Db2 driver (built on top of `pdo_ibm` extension) has already been unsupported as of 2.5, it has been now removed.
 
 The following class has been removed:
 
