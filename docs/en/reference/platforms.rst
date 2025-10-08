@@ -64,8 +64,8 @@ PostgreSQL
 -  ``PostgreSQL100Platform`` for version 10.0 and above.
 -  ``PostgreSQL120Platform`` for version 12.0 and above.
 
-IBM DB2
-^^^^^^^
+Db2
+^^^
 
 -  ``Db2Platform`` for version 9.7 and above.
 -  ``Db2111Platform`` for version 11.1 (11.1 GA) and above.

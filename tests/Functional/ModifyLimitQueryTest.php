@@ -190,7 +190,7 @@ SQL;
     {
         $platform = $this->connection->getDatabasePlatform();
         if ($platform instanceof DB2Platform) {
-            self::markTestSkipped('DB2 cannot handle ORDER BY in subquery');
+            self::markTestSkipped('Db2 cannot handle ORDER BY in subquery');
         }
 
         if ($platform instanceof OraclePlatform) {
