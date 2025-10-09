@@ -7,6 +7,7 @@ parameters:
         - tests
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: false
+    checkStrictPrintfPlaceholderTypes: false
     exceptions:
         check:
             missingCheckedExceptionInThrows: true
@@ -14,6 +15,7 @@ parameters:
             - ErrorException
             - LogicException
             - RuntimeException
+            - ValueError
     ignoreErrors:
         - identifier: missingType.generics
 
