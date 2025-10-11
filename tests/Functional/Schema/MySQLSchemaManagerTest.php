@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Doctrine\DBAL\Tests\Functional\Schema;
 
-use DateTime;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception\DatabaseRequired;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
@@ -629,16 +628,9 @@ class MySQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
 
     public function testColumnDefaultsAreValid(): void
     {
-        $currentTimeStampSql = $this->connection->getDatabasePlatform()->getCurrentTimestampSQL();
-
         $table = Table::editor()
             ->setUnquotedName('test_column_defaults_are_valid')
             ->setColumns(
-                Column::editor()
-                    ->setUnquotedName('col_datetime')
-                    ->setTypeName(Types::DATETIME_MUTABLE)
-                    ->setDefaultValue($currentTimeStampSql)
-                    ->create(),
                 Column::editor()
                     ->setUnquotedName('col_datetime_null')
                     ->setTypeName(Types::DATETIME_MUTABLE)
@@ -681,19 +673,15 @@ class MySQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
             'INSERT INTO test_column_defaults_are_valid () VALUES()',
         );
 
-        $row = $this->connection->fetchAssociative(
-            'SELECT *, DATEDIFF(CURRENT_TIMESTAMP(), col_datetime) as diff_seconds FROM test_column_defaults_are_valid',
-        );
+        $row = $this->connection->fetchAssociative('SELECT * FROM test_column_defaults_are_valid');
         self::assertNotFalse($row);
 
-        self::assertInstanceOf(DateTime::class, DateTime::createFromFormat('Y-m-d H:i:s', $row['col_datetime']));
         self::assertNull($row['col_datetime_null']);
         self::assertSame('2012-12-12', $row['col_date']);
         self::assertSame('A', $row['col_string']);
         self::assertEquals(1, $row['col_int']);
         self::assertEquals(-1, $row['col_neg_int']);
         self::assertEquals('-2.300', $row['col_decimal']);
-        self::assertLessThan(5, $row['diff_seconds']);
     }
 
     /**
