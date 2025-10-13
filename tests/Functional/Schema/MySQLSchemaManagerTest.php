@@ -11,6 +11,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnEditor;
+use Doctrine\DBAL\Schema\DefaultExpression\CurrentTimestamp;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Index\IndexedColumn;
 use Doctrine\DBAL\Schema\Index\IndexType;
@@ -594,7 +595,8 @@ class MySQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
     {
         $platform = $this->connection->getDatabasePlatform();
 
-        $currentTimeStampSql = $platform->getCurrentTimestampSQL();
+        $currentTimeStamp    = new CurrentTimestamp();
+        $currentTimeStampSQL = $currentTimeStamp->toSQL($platform);
 
         $table = Table::editor()
             ->setUnquotedName('test_column_defaults_current_timestamp')
@@ -602,12 +604,12 @@ class MySQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
                 Column::editor()
                     ->setUnquotedName('col_datetime')
                     ->setTypeName(Types::DATETIME_MUTABLE)
-                    ->setDefaultValue($currentTimeStampSql)
+                    ->setDefaultValue($currentTimeStamp)
                     ->create(),
                 Column::editor()
                     ->setUnquotedName('col_datetime_nullable')
                     ->setTypeName(Types::DATETIME_MUTABLE)
-                    ->setDefaultValue($currentTimeStampSql)
+                    ->setDefaultValue($currentTimeStamp)
                     ->create(),
             )
             ->create();
@@ -615,8 +617,8 @@ class MySQLSchemaManagerTest extends SchemaManagerFunctionalTestCase
         $this->dropAndCreateTable($table);
 
         $onlineTable = $this->schemaManager->introspectTableByUnquotedName('test_column_defaults_current_timestamp');
-        self::assertSame($currentTimeStampSql, $onlineTable->getColumn('col_datetime')->getDefault());
-        self::assertSame($currentTimeStampSql, $onlineTable->getColumn('col_datetime_nullable')->getDefault());
+        self::assertSame($currentTimeStampSQL, $onlineTable->getColumn('col_datetime')->getDefault());
+        self::assertSame($currentTimeStampSQL, $onlineTable->getColumn('col_datetime_nullable')->getDefault());
 
         self::assertTrue(
             $this->schemaManager

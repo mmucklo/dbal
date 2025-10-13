@@ -19,6 +19,7 @@ use Doctrine\DBAL\Platforms\Exception\NotSupported;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\DefaultExpression;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
@@ -1542,6 +1543,10 @@ abstract class AbstractPlatform
         }
 
         $default = $column['default'];
+
+        if ($default instanceof DefaultExpression) {
+            return ' DEFAULT ' . $default->toSQL($this);
+        }
 
         if (! isset($column['type'])) {
             return " DEFAULT '" . $default . "'";
