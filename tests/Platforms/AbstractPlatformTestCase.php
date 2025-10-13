@@ -12,6 +12,8 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\ComparatorConfig;
+use Doctrine\DBAL\Schema\DefaultExpression\CurrentDate;
+use Doctrine\DBAL\Schema\DefaultExpression\CurrentTimestamp;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Name\Identifier;
@@ -338,7 +340,7 @@ abstract class AbstractPlatformTestCase extends TestCase
                 ' DEFAULT ' . $this->platform->getCurrentTimestampSQL(),
                 $this->platform->getDefaultValueDeclarationSQL([
                     'type'    => Type::getType($type),
-                    'default' => $this->platform->getCurrentTimestampSQL(),
+                    'default' => new CurrentTimestamp(),
                 ]),
             );
         }
@@ -365,7 +367,7 @@ abstract class AbstractPlatformTestCase extends TestCase
                 ' DEFAULT ' . $currentDateSql,
                 $this->platform->getDefaultValueDeclarationSQL([
                     'type'    => Type::getType($type),
-                    'default' => $currentDateSql,
+                    'default' => new CurrentDate(),
                 ]),
             );
         }

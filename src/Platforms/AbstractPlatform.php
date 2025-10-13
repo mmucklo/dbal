@@ -19,6 +19,7 @@ use Doctrine\DBAL\Platforms\Exception\NotSupported;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
+use Doctrine\DBAL\Schema\DefaultExpression;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
@@ -1543,6 +1544,10 @@ abstract class AbstractPlatform
 
         $default = $column['default'];
 
+        if ($default instanceof DefaultExpression) {
+            return ' DEFAULT ' . $default->toSQL($this);
+        }
+
         if (! isset($column['type'])) {
             return " DEFAULT '" . $default . "'";
         }
@@ -1554,14 +1559,35 @@ abstract class AbstractPlatform
         }
 
         if ($type instanceof Types\PhpDateTimeMappingType && $default === $this->getCurrentTimestampSQL()) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7195',
+                'Using "%s" as a column default value is deprecated. Use a CurrentTimestamp instance instead.',
+                $default,
+            );
+
             return ' DEFAULT ' . $this->getCurrentTimestampSQL();
         }
 
         if ($type instanceof Types\PhpTimeMappingType && $default === $this->getCurrentTimeSQL()) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7195',
+                'Using "%s" as a column default value is deprecated. Use a CurrentTime instance instead.',
+                $default,
+            );
+
             return ' DEFAULT ' . $this->getCurrentTimeSQL();
         }
 
         if ($type instanceof Types\PhpDateMappingType && $default === $this->getCurrentDateSQL()) {
+            Deprecation::trigger(
+                'doctrine/dbal',
+                'https://github.com/doctrine/dbal/pull/7195',
+                'Using "%s" as a column default value is deprecated. Use a CurrentDate instance instead.',
+                $default,
+            );
+
             return ' DEFAULT ' . $this->getCurrentDateSQL();
         }
 

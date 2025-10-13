@@ -14,6 +14,7 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\ComparatorConfig;
+use Doctrine\DBAL\Schema\DefaultExpression\CurrentDate;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\PrimaryKeyConstraint;
 use Doctrine\DBAL\Schema\Sequence;
@@ -1087,7 +1088,7 @@ class SQLServerPlatformTest extends AbstractPlatformTestCase
                 ' DEFAULT CONVERT(date, GETDATE())',
                 $this->platform->getDefaultValueDeclarationSQL([
                     'type' => Type::getType($type),
-                    'default' => $currentDateSql,
+                    'default' => new CurrentDate(),
                 ]),
             );
         }
