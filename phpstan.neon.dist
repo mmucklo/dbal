@@ -14,6 +14,11 @@ parameters:
         # some drivers actually do accept 2nd parameter...
         - '~^Method Doctrine\\DBAL\\Platforms\\AbstractPlatform::getListTableForeignKeysSQL\(\) invoked with \d+ parameters, 1 required\.\z~'
 
+        # https://github.com/php-fig/log-test/issues/17
+        -
+            message: '~Parameter #1 \$record of method .*TestLogger~'
+            identifier: argument.type
+
         # https://github.com/phpstan/phpstan-strict-rules/issues/103
         -
             message: '~^Construct empty\(\) is not allowed. Use more strict comparison\.~'
