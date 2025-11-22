@@ -64,5 +64,8 @@
     },
     "autoload-dev": {
         "psr-4": { "Doctrine\\DBAL\\Tests\\": "tests" }
+    },
+    "scripts": {
+        "docs": "composer --working-dir docs update && ./docs/vendor/bin/build-docs.sh @additional_args"
     }
 }

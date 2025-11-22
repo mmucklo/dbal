@@ -26,6 +26,11 @@ parameters:
                 - static-analysis
                 - tests
 
+        # https://github.com/php-fig/log-test/issues/17
+        -
+            message: '~Parameter #1 \$record of method .*TestLogger~'
+            identifier: argument.type
+
         # https://github.com/phpstan/phpstan-strict-rules/issues/103
         -
             message: '~^Construct empty\(\) is not allowed. Use more strict comparison\.~'
