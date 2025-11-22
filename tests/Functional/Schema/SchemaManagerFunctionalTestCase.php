@@ -1724,7 +1724,7 @@ abstract class SchemaManagerFunctionalTestCase extends FunctionalTestCase
 
         if ($platform instanceof DB2Platform) {
             self::markTestIncomplete(
-                'Introspection of lower-case identifiers as quoted is currently not implemented on IBM DB2.',
+                'Introspection of lower-case identifiers as quoted is currently not implemented on Db2.',
             );
         }
 
