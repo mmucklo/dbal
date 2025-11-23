@@ -68,7 +68,6 @@ jobs:
       extension: ${{ matrix.extension }}
 
     strategy:
-      fail-fast: false
       matrix:
         php-version:
           # TODO: Switch to PHP 8.5
