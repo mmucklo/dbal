@@ -271,7 +271,7 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v5"
+        uses: "actions/checkout@v6"
 
       - name: "Install PHP"
         uses: "shivammathur/setup-php@v2"
@@ -283,7 +283,6 @@ jobs:
       - name: "Lower minimum stability"
         run: |
           composer config minimum-stability dev
-          composer require --no-update --dev symfony/console:^8 symfony/cache:^8
 
       - name: "Install development dependencies with Composer"
         uses: "ramsey/composer-install@v3"
@@ -308,7 +307,7 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v5"
+        uses: "actions/checkout@v6"
         with:
           fetch-depth: 2
 
