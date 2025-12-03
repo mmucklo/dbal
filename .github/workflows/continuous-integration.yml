@@ -77,9 +77,7 @@ jobs:
     strategy:
       matrix:
         php-version:
-          # TODO: Switch to PHP 8.5
-          # see https://github.com/shivammathur/setup-php/issues/1028
-          - "8.4"
+          - "8.5"
         oracle-version:
           - "18"
           - "21"
@@ -94,9 +92,6 @@ jobs:
           - php-version: '8.2'
             oracle-version: '23'
             extension: pdo_oci
-          - php-version: "8.5"
-            oracle-version: "23"
-            extension: oci8
 
   phpunit-postgres:
     name: "PHPUnit with PostgreSQL"
