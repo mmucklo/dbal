@@ -37,10 +37,12 @@ class ColumnTest extends TestCase
         self::assertTrue($column->getFixed());
         self::assertEquals('baz', $column->getDefault());
 
-        self::assertEquals(['charset' => 'utf8'], $column->getPlatformOptions());
+        self::assertEquals(['charset' => 'utf8', 'enumType' => self::class], $column->getPlatformOptions());
         self::assertTrue($column->hasPlatformOption('charset'));
         self::assertEquals('utf8', $column->getPlatformOption('charset'));
         self::assertFalse($column->hasPlatformOption('collation'));
+        self::assertTrue($column->hasPlatformOption('enumType'));
+        self::assertEquals(self::class, $column->getPlatformOption('enumType'));
     }
 
     public function testToArray(): void
@@ -60,6 +62,7 @@ class ColumnTest extends TestCase
             'comment' => '',
             'values' => [],
             'charset' => 'utf8',
+            'enumType' => self::class,
         ];
 
         self::assertSame($expected, $this->createColumn()->toArray());
@@ -98,6 +101,7 @@ class ColumnTest extends TestCase
             ->setFixed(true)
             ->setDefaultValue('baz')
             ->setCharset('utf8')
+            ->setEnumType(self::class)
             ->create();
     }
 
