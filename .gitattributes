@@ -13,3 +13,5 @@
 /static-analysis export-ignore
 /tests export-ignore
 /UPGRADE.md export-ignore
+/README.md export-ignore
+/CONTRIBUTING.md export-ignore
