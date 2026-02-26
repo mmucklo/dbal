@@ -39,6 +39,7 @@
     "require-dev": {
         "doctrine/coding-standard": "14.0.0",
         "fig/log-test": "^1",
+        "google/cloud-spanner": "^2.5",
         "jetbrains/phpstorm-stubs": "2023.2",
         "phpstan/phpstan": "2.1.30",
         "phpstan/phpstan-phpunit": "2.0.7",
@@ -50,6 +51,7 @@
         "symfony/console": "^5.4|^6.3|^7.0|^8.0"
     },
     "suggest": {
+        "google/cloud-spanner": "Supported via the Spanner driver.",
         "symfony/console": "For helpful console commands such as SQL execution and import of files."
     },
     "config": {

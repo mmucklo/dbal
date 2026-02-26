@@ -56,10 +56,15 @@ class DataAccessTest extends FunctionalTestCase
 
         $this->dropAndCreateTable($table);
 
+        $datetime = '2010-01-01 10:10:10';
+        if ($this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\SpannerPlatform) {
+            $datetime .= 'Z';
+        }
+
         $this->connection->insert('fetch_table', [
             'test_int' => 1,
             'test_string' => 'foo',
-            'test_datetime' => '2010-01-01 10:10:10',
+            'test_datetime' => $datetime,
         ]);
     }
 
@@ -295,7 +300,7 @@ class DataAccessTest extends FunctionalTestCase
         }
 
         $result = $this->connection->executeQuery(
-            'SELECT test_int FROM fetch_table WHERE test_int IN (?)',
+            'SELECT test_int FROM fetch_table WHERE test_int IN (?) ORDER BY test_int',
             [[100, 101, 102, 103, 104]],
             [ArrayParameterType::INTEGER],
         );
@@ -305,7 +310,7 @@ class DataAccessTest extends FunctionalTestCase
         self::assertEquals([[100], [101], [102], [103], [104]], $data);
 
         $result = $this->connection->executeQuery(
-            'SELECT test_int FROM fetch_table WHERE test_string IN (?)',
+            'SELECT test_int FROM fetch_table WHERE test_string IN (?) ORDER BY test_int',
             [['foo100', 'foo101', 'foo102', 'foo103', 'foo104']],
             [ArrayParameterType::STRING],
         );

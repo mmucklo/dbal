@@ -9,6 +9,7 @@ use Doctrine\DBAL\Driver\Mysqli;
 use Doctrine\DBAL\Driver\OCI8;
 use Doctrine\DBAL\Driver\PDO;
 use Doctrine\DBAL\Driver\PgSQL;
+use Doctrine\DBAL\Driver\Spanner;
 use Doctrine\DBAL\Driver\SQLite3;
 use Doctrine\DBAL\Driver\SQLSrv;
 use Doctrine\DBAL\Exception\DriverRequired;
@@ -86,6 +87,7 @@ final class DriverManager
         'pgsql'      => PgSQL\Driver::class,
         'sqlsrv'     => SQLSrv\Driver::class,
         'sqlite3'    => SQLite3\Driver::class,
+        'spanner'    => Spanner\Driver::class,
     ];
 
     /**

@@ -1,0 +1,54 @@
+name: Spanner Driver Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Start Spanner Emulator
+      run: |
+        docker rm -f spanner-emulator || true
+        docker run -d --name spanner-emulator -p 9010:9010 -p 9020:9020 gcr.io/cloud-spanner-emulator/emulator:latest
+        timeout 30s bash -c 'until curl -s localhost:9020/v1/projects/test-project/instances; do sleep 1; done'
+        curl -s -X POST http://localhost:9020/v1/projects/test-project/instances \
+          -d '{"instanceId": "test-instance", "instance": {"config": "projects/test-project/instanceConfigs/emulator-config", "displayName": "Test Instance"}}'
+        echo "Emulator is up!"
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: grpc
+        coverage: none
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run Driver Tests
+      env:
+        SPANNER_EMULATOR_HOST: localhost:9010
+        GOOGLE_CLOUD_PROJECT: test-project
+      run: vendor/bin/phpunit tests/Driver/Spanner
+
+    - name: Run Platform Tests
+      run: |
+        vendor/bin/phpunit tests/Platforms/SpannerPlatformTest.php
+        vendor/bin/phpunit tests/Platforms/SpannerPostgreSQLPlatformTest.php
+
+    - name: Run Functional Tests
+      env:
+        SPANNER_EMULATOR_HOST: localhost:9010
+        GOOGLE_CLOUD_PROJECT: test-project
+      run: |
+        sleep 3
+        vendor/bin/phpunit -c ci/github/phpunit/spanner.xml \
+          tests/Functional/Driver/Spanner/ConnectionTest.php \
+          tests/Functional/DataAccessTest.php \
+          tests/Functional/Schema/SchemaManagerTest.php \
+          tests/Functional/Schema/SpannerSchemaManagerTest.php

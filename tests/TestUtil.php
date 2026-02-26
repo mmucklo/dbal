@@ -9,11 +9,13 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\AbstractSQLiteDriver\Middleware\EnableForeignKeys;
 use Doctrine\DBAL\Driver\Mysqli;
 use Doctrine\DBAL\Driver\OCI8\Middleware\InitializeSession;
+use Doctrine\DBAL\Driver\Spanner\Middleware\RetryMiddleware;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception\DatabaseObjectNotFoundException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\DB2Platform;
 use Doctrine\DBAL\Platforms\OraclePlatform;
+use Doctrine\DBAL\Platforms\SpannerPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Schema\DefaultSchemaManagerFactory;
 use InvalidArgumentException;
@@ -31,6 +33,7 @@ use function str_starts_with;
 use function strlen;
 use function substr;
 use function unlink;
+use function usleep;
 
 /**
  * TestUtil is a class with static utility methods used during tests.
@@ -120,6 +123,20 @@ class TestUtil
             $sm->dropSchemaObjects($schema);
 
             $testConn->close();
+        } elseif ($platform instanceof SpannerPlatform) {
+            $sm     = $privConn->createSchemaManager();
+            $dbname = $testConnParams['dbname'] ?? $testConnParams['database'] ?? 'test-database';
+
+            $sm->dropDatabase($dbname);
+            $sm->createDatabase($dbname);
+
+            // Give the emulator more time to stabilize after DB recreation
+            usleep(3000000); // 3000ms
+
+            $native = $privConn->getNativeConnection();
+            if ($native instanceof \Doctrine\DBAL\Driver\Spanner\Connection) {
+                $native->connect();
+            }
         } else {
             if (! $platform instanceof OraclePlatform) {
                 if (! isset($testConnParams['dbname'])) {
@@ -164,6 +181,9 @@ class TestUtil
             case 'pdo_sqlite':
             case 'sqlite3':
                 $configuration->setMiddlewares([new EnableForeignKeys()]);
+                break;
+            case 'spanner':
+                $configuration->setMiddlewares([new RetryMiddleware()]);
                 break;
         }
 

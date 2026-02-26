@@ -8,10 +8,12 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Platforms\Keywords\PostgreSQLKeywords;
 use Doctrine\DBAL\Platforms\PostgreSQL\PostgreSQLMetadataProvider;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Identifier;
 use Doctrine\DBAL\Schema\Index;
+use Doctrine\DBAL\Schema\Metadata\MetadataProvider;
 use Doctrine\DBAL\Schema\Name\UnquotedIdentifierFolding;
 use Doctrine\DBAL\Schema\PostgreSQLSchemaManager;
 use Doctrine\DBAL\Schema\Sequence;
@@ -825,12 +827,12 @@ class PostgreSQLPlatform extends AbstractPlatform
         return 'JSONB';
     }
 
-    public function createMetadataProvider(Connection $connection): PostgreSQLMetadataProvider
+    public function createMetadataProvider(Connection $connection): MetadataProvider
     {
         return new PostgreSQLMetadataProvider($connection, $this);
     }
 
-    public function createSchemaManager(Connection $connection): PostgreSQLSchemaManager
+    public function createSchemaManager(Connection $connection): AbstractSchemaManager
     {
         return new PostgreSQLSchemaManager($connection, $this);
     }

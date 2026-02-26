@@ -263,6 +263,10 @@ final class SchemaManagerTest extends FunctionalTestCase
     {
         $platform = $this->connection->getDatabasePlatform();
 
+        if ($platform instanceof \Doctrine\DBAL\Platforms\SpannerPlatform) {
+            $this->markTestSkipped('Spanner does not support VARCHAR in manual SQL used in this test.');
+        }
+
         if ($platform->supportsSchemas()) {
             self::markTestIncomplete('DBAL 4.x will fail to introspect this table on a platform that supports schemas');
         }
